@@ -19,6 +19,7 @@ export interface PromotionDialogState {
   color?: Color
   square?: Key
   callback?: (promotionValue: Promotion) => void
+  cancel?: () => void
 }
 
 export interface BoardState {
@@ -80,15 +81,21 @@ export class BoardAPI {
     const promotionFile = piece?.color === 'w' ? '8' : '1'
     let promotion: Promotion | undefined = undefined
     if (piece?.type === 'p' && dest[1] === promotionFile) {
-      promotion = await new Promise((resolve) => {
-        this.state.promotionDialogState = {
-          isEnabled: true,
-          color: this.getTurnColor(),
-          square: dest,
-          callback: resolve
-        }
-      })
-      console.log(promotion)
+      try {
+        promotion = await new Promise((resolve, reject) => {
+          this.state.promotionDialogState = {
+            isEnabled: true,
+            color: this.getTurnColor(),
+            square: dest,
+            callback: resolve,
+            cancel: reject
+          }
+        })
+      } catch {
+        this.boardApi.move(dest, orig)
+        this.update()
+        return
+      }
     }
     return this.move({ from: orig, to: dest, promotion } as Move)
   }

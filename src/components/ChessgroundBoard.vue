@@ -66,11 +66,21 @@ const promotionSelected = (promotion: Promotion) => {
   boardState.promotionDialogState.callback?.(promotion)
   boardState.promotionDialogState = { isEnabled: false }
 }
+
+const promotionCanceled = () => {
+  boardState.promotionDialogState.cancel?.()
+  boardState.promotionDialogState = { isEnabled: false }
+}
 </script>
 
 <template>
   <div ref="board" id="board"></div>
-  <div ref="promotion" id="promotion-choice" v-show="boardState.promotionDialogState.isEnabled">
+  <div
+    ref="promotion"
+    id="promotion-choice"
+    v-show="boardState.promotionDialogState.isEnabled"
+    @click="promotionCanceled"
+  >
     <button
       v-for="(piece, index) in promotions"
       :key="piece.name"
