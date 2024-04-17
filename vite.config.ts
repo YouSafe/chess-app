@@ -10,15 +10,16 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
+      devOptions: { enabled: true },
       manifest: {
         name: 'Chess App',
-        start_url: '/',
-        display: 'fullscreen',
+        start_url: '/chess-app/',
+        display: 'standalone',
         prefer_related_applications: true,
-        theme_color: '#ffffff',
+        theme_color: '#1d232a',
         icons: [
           {
-            src: '/icons/512.png',
+            src: 'icons/512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable any'
