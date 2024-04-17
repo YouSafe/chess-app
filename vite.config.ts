@@ -2,11 +2,30 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    VitePWA({
+      manifest: {
+        name: 'Chess App',
+        start_url: '/',
+        display: 'fullscreen',
+        prefer_related_applications: true,
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: '/icons/512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable any'
+          }
+        ]
+      },
+      registerType: 'autoUpdate'
+    })
   ],
   resolve: {
     alias: {
