@@ -92,7 +92,7 @@ export class BoardAPI {
           }
         })
       } catch {
-        this.boardApi.move(dest, orig)
+        this.boardApi.set({ fen: this.instance.fen() })
         this.update()
         return
       }
