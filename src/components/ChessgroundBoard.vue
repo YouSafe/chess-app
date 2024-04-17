@@ -13,7 +13,10 @@ import type { Color, Key } from 'chessground/types'
 const board = ref<HTMLElement | null>(null)
 const promotion = ref<HTMLElement | null>(null)
 
-const boardState = reactive({ promotionDialogState: { isEnabled: false } } as BoardState)
+const boardState = reactive({
+  promotionDialogState: { isEnabled: false },
+  orientationState: undefined
+} as BoardState)
 const boardAPI = ref<BoardAPI | null>(null)
 
 const emit = defineEmits<{
@@ -77,7 +80,7 @@ const promotionSelected = (promotion: Promotion) => {
         promotionButtonPosition(
           index,
           boardState.promotionDialogState.square,
-          boardAPI?.getOrientation()
+          boardState.orientationState
         )
       "
       :aria-label="piece.name"

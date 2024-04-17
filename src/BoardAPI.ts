@@ -23,6 +23,7 @@ export interface PromotionDialogState {
 
 export interface BoardState {
   promotionDialogState: PromotionDialogState
+  orientationState?: Color
 }
 
 export class BoardAPI {
@@ -65,6 +66,9 @@ export class BoardAPI {
   reset() {
     const config: Config = merge(defaults() as Config, this.config)
     this.boardApi.state.selected = undefined
+    if (config.orientation) {
+      this.state.orientationState = config.orientation
+    }
 
     this.setConfig(config)
     this.update()
@@ -151,7 +155,7 @@ export class BoardAPI {
 
   toggleOrientation(): void {
     this.boardApi.toggleOrientation()
-    console.log(this.config.orientation)
+    this.state.orientationState = this.boardApi.state.orientation
   }
 
   getOrientation(): Color {
