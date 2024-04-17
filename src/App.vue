@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
+import type { BoardAPI } from './BoardAPI'
+
+let boardAPI: BoardAPI | undefined
 </script>
 
 <template>
   <header></header>
 
   <div class="flex flex-wrap w-full h-full container-size">
-    <ChessgroundBoard></ChessgroundBoard>
-    <aside></aside>
+    <ChessgroundBoard @created="(api) => (boardAPI = api)"></ChessgroundBoard>
+    <aside>
+      <button class="btn btn-primary" @click="boardAPI?.toggleOrientation()">
+        Toggle Orientation
+      </button>
+    </aside>
   </div>
 </template>
 
