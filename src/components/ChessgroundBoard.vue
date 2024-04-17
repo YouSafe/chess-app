@@ -7,6 +7,7 @@ import '../assets/chessground.base.css'
 import '../assets/chessground.coords.css'
 import '../assets/chessground.brown.css'
 import '../assets/chessground.cburnett.css'
+import type { Config } from 'chessground/config'
 
 const board = ref<HTMLElement | null>(null)
 const chessground = ref<Api | null>(null)
@@ -16,7 +17,7 @@ onMounted(() => {
     throw new Error('Failed to mount board')
   }
 
-  const config = {}
+  const config: Config = {}
   chessground.value = Chessground(board.value, config)
 })
 </script>
