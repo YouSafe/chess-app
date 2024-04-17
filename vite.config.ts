@@ -10,7 +10,6 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      devOptions: { enabled: true },
       manifest: {
         name: 'Chess App',
         start_url: '/chess-app/',
