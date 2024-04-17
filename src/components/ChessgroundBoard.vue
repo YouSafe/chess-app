@@ -57,7 +57,6 @@ onMounted(() => {
   }
   const chessground = Chessground(board.value, config)
   const api = new BoardAPI(chessground, config, boardState)
-  api.setPosition('8/k1PPPPP1/8/8/8/8/2ppppp1/K7 w - - 0 1')
   boardAPI.value = api
   emit('created', api)
 })
