@@ -16,7 +16,7 @@ let boardAPI: BoardAPI | undefined
 const pgn = ref<string | undefined>(undefined)
 const fen = ref<string | undefined>(undefined)
 
-const { bestMove, currMove, sendPosition } = useEngine()
+const { bestMove, currMove, sendPosition, evaluation } = useEngine()
 
 function handleBoardCreated(api: BoardAPI) {
   boardAPI = api
@@ -57,15 +57,24 @@ watch(currMove, (move) => {
       <div>
         {{ fen }}
         {{ pgn }}
+        {{ evaluation }}
       </div>
       <div class="flex gap-2 justify-between min-w-0">
         <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
         </button>
-        <button @click="boardAPI?.viewPrevious()" class="btn btn-neutral flex-1">
+        <button
+          @keyup.left="boardAPI?.viewPrevious()"
+          @click="boardAPI?.viewPrevious()"
+          class="btn btn-neutral flex-1"
+        >
           <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
         </button>
-        <button @click="boardAPI?.viewNext()" class="btn btn-neutral flex-1">
+        <button
+          @keyup.right="boardAPI?.viewNext()"
+          @click="boardAPI?.viewNext()"
+          class="btn btn-neutral flex-1"
+        >
           <ChevronRightIcon class="size-8"></ChevronRightIcon>
         </button>
         <button @click="boardAPI?.stopViewing()" class="btn btn-neutral flex-1">

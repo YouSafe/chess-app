@@ -5,6 +5,7 @@ import { ref } from 'vue'
 export function useEngine() {
   const bestMove = ref<Move | undefined>(undefined)
   const currMove = ref<Move | undefined>(undefined)
+  const evaluation = ref<{ type: 'cp' | 'mate'; value: number } | undefined>(undefined)
 
   const wasmSupport =
     typeof WebAssembly === 'object' &&
@@ -27,7 +28,6 @@ export function useEngine() {
 
   function handleEngineStdout(data: MessageEvent<unknown>) {
     const uciStringSplitted = (data.data as string).split(' ')
-    // console.log(data)
 
     if (uciStringSplitted[0] === 'uciok') {
       setOption('UCI_AnalyseMode', 'true')
@@ -67,7 +67,7 @@ export function useEngine() {
           case 'score':
             parsed.score = {
               type: parts[i + 1] as 'cp' | 'mate',
-              value: value
+              value: parseInt(parts[i + 2])
             }
             i++ // Skip next part since it's already parsed
             break
@@ -81,6 +81,7 @@ export function useEngine() {
       if (currmove !== undefined) {
         currMove.value = parseUCIMove(currmove)
       }
+      evaluation.value = parsed.score
     }
   }
 
@@ -91,12 +92,11 @@ export function useEngine() {
   function sendPosition(position: string) {
     bestMove.value = undefined
     currMove.value = undefined
-
-    console.log(`position fen ${position} moves`)
+    evaluation.value = undefined
 
     worker.postMessage(`position fen ${position} moves `)
     worker.postMessage('go movetime 2000')
   }
 
-  return { bestMove, currMove, sendPosition }
+  return { bestMove, currMove, sendPosition, evaluation }
 }
