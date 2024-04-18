@@ -236,6 +236,10 @@ export class BoardAPI {
           isEnabled: true,
           viewingPly: ply
         }
+        if (this.state.promotionDialogState.isEnabled) {
+          this.state.promotionDialogState.cancel()
+          this.state.promotionDialogState = { isEnabled: false }
+        }
       } else {
         this.state.viewHistoryState.viewingPly = ply
       }
