@@ -1,29 +1,44 @@
 <script setup lang="ts">
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
 import type { BoardAPI } from './BoardAPI'
+import { useEngine } from '@/Engine'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import type { DrawShape } from 'chessground/draw'
 
 let boardAPI: BoardAPI | undefined
 
 const pgn = ref<string | undefined>(undefined)
 const fen = ref<string | undefined>(undefined)
 
+const { bestMove, currMove, sendPosition } = useEngine()
+
 function handleBoardCreated(api: BoardAPI) {
   boardAPI = api
   fen.value = api.getFen()
   pgn.value = api.getPgn()
+
+  sendPosition(fen.value)
 }
 
 function handleMove() {
   pgn.value = boardAPI?.getPgn()
   fen.value = boardAPI?.getFen()
+
+  if (boardAPI) {
+    sendPosition(boardAPI.getFen())
+  }
 }
+
+watch(currMove, (move) => {
+  if (!move) return
+  boardAPI?.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
+})
 </script>
 
 <template>

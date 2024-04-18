@@ -1,6 +1,7 @@
 import { Chess, SQUARES, type Move, type Square } from 'chess.js'
 import type { Api } from 'chessground/api'
 import type { Config } from 'chessground/config'
+import type { DrawShape } from 'chessground/draw'
 import { defaults } from 'chessground/state'
 import type { Color, Key, MoveMetadata } from 'chessground/types'
 import { merge } from 'ts-deepmerge'
@@ -63,8 +64,8 @@ export class BoardAPI {
   }
 
   private update() {
+    // do not change the board state while viewing history
     if (this.state.viewHistoryState.isEnabled) {
-      // do not change the actual board while viewing history
       return
     }
 
@@ -140,18 +141,14 @@ export class BoardAPI {
 
     this.emit('move', moveResult)
 
+    // only update when not viewing history
     if (this.state.viewHistoryState.isEnabled) {
-      // only update when not viewing history
       return true
     }
 
     this.boardApi.move(move.from, move.to)
-    if (moveResult.flags === 'e' || moveResult?.promotion) {
+    if (moveResult.flags === 'e' || moveResult.promotion) {
       this.boardApi.set({ fen: moveResult.after })
-      // setTimeout(
-      //   () => ,
-      //   this.boardApi.state.animation.current ? this.boardApi.state.animation.duration : 0
-      // )
     }
     this.update()
     return true
@@ -161,6 +158,10 @@ export class BoardAPI {
     this.instance.load(fen)
     this.boardApi.set({ fen })
     this.update()
+  }
+
+  setAutoShapes(shapes: DrawShape[]) {
+    this.boardApi.setAutoShapes(shapes)
   }
 
   setConfig(config: Config) {
@@ -174,7 +175,7 @@ export class BoardAPI {
     if (fen) {
       this.setPosition(fen)
     }
-    this.boardApi.redrawAll() // is this really necessary?
+    this.boardApi.redrawAll()
   }
 
   private legalMoves(): Map<Key, Key[]> {
@@ -197,6 +198,8 @@ export class BoardAPI {
     this.boardApi.toggleOrientation()
     this.state.orientationState = this.boardApi.state.orientation
   }
+
+  // not reactive!!
 
   getOrientation(): Color {
     return this.boardApi.state.orientation
