@@ -20,9 +20,6 @@ const { bestMove, currMove, sendPosition } = useEngine()
 
 function handleBoardCreated(api: BoardAPI) {
   boardAPI = api
-  api.loadPgn(`[Variant "From Position"]
-[FEN "k6q/8/8/8/8/8/8/K7 w - - 0 1"]
-`)
 
   fen.value = api.getFen()
   pgn.value = api.getPgn()
@@ -32,11 +29,12 @@ function handleBoardCreated(api: BoardAPI) {
 
 function handleMove() {
   pgn.value = boardAPI?.getPgn()
-  fen.value = boardAPI?.getFen()
+}
 
-  if (boardAPI) {
-    sendPosition(boardAPI.getFen())
-  }
+function handlePositionChange(positionFen: string) {
+  fen.value = positionFen
+
+  sendPosition(positionFen)
 }
 
 watch(currMove, (move) => {
@@ -47,7 +45,11 @@ watch(currMove, (move) => {
 
 <template>
   <div class="flex flex-wrap w-full h-full container-size">
-    <ChessgroundBoard @created="handleBoardCreated" @move="handleMove"></ChessgroundBoard>
+    <ChessgroundBoard
+      @created="handleBoardCreated"
+      @move="handleMove"
+      @position-change="handlePositionChange"
+    ></ChessgroundBoard>
     <aside class="min-w-[20em] max-w-[40em] min-h-40 p-1 flex-grow flex-shrink bg-base-200">
       <button class="btn btn-primary" @click="boardAPI?.toggleOrientation()">
         Toggle Orientation

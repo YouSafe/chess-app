@@ -45,6 +45,7 @@ export interface BoardState {
 export interface BoardEmits {
   (e: 'created', api: BoardAPI): void
   (e: 'move', move: Move): void
+  (e: 'positionChange', fen: string): void
 }
 
 export class BoardAPI {
@@ -120,6 +121,7 @@ export class BoardAPI {
         })
       } catch {
         this.boardApi.set({ fen: this.instance.fen() })
+        this.emit('positionChange', this.instance.fen())
         this.update()
         return
       }
@@ -140,6 +142,7 @@ export class BoardAPI {
     }
 
     this.emit('move', moveResult)
+    this.emit('positionChange', moveResult.after)
 
     // only update when not viewing history
     if (this.state.viewHistoryState.isEnabled) {
@@ -149,6 +152,7 @@ export class BoardAPI {
     this.boardApi.move(move.from, move.to)
     if (moveResult.flags === 'e' || moveResult.promotion) {
       this.boardApi.set({ fen: moveResult.after })
+      this.emit('positionChange', moveResult.after)
     }
     this.update()
     return true
@@ -157,6 +161,7 @@ export class BoardAPI {
   setPosition(fen: string) {
     this.instance.load(fen)
     this.boardApi.set({ fen })
+    this.emit('positionChange', fen)
     this.update()
   }
 
@@ -227,6 +232,7 @@ export class BoardAPI {
     this.instance.loadPgn(pgn)
     this.state.viewHistoryState = { isEnabled: false }
     this.boardApi.set({ fen: this.instance.fen() })
+    this.emit('positionChange', this.instance.fen())
     this.update()
   }
 
@@ -244,6 +250,7 @@ export class BoardAPI {
           fen: lastMove.after,
           lastMove: [lastMove.from, lastMove.to]
         })
+        this.emit('positionChange', lastMove.after)
 
         this.state.viewHistoryState = { isEnabled: false }
         this.update()
@@ -266,6 +273,7 @@ export class BoardAPI {
         fen: history[ply].before,
         lastMove: ply > 0 ? [history[ply - 1].from, history[ply - 1].to] : undefined
       })
+      this.emit('positionChange', history[ply].before)
 
       const isMoveChecking = (move: Move) => {
         const lastSymbol = move.san.at(-1)
