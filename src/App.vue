@@ -7,20 +7,36 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
+import { ref } from 'vue'
 
 let boardAPI: BoardAPI | undefined
+
+const pgn = ref<string | undefined>(undefined)
+const fen = ref<string | undefined>(undefined)
+
+function handleBoardCreated(api: BoardAPI) {
+  boardAPI = api
+  fen.value = api.getFen()
+  pgn.value = api.getPgn()
+}
+
+function handleMove() {
+  pgn.value = boardAPI?.getPgn()
+  fen.value = boardAPI?.getFen()
+}
 </script>
 
 <template>
   <div class="flex flex-wrap w-full h-full container-size">
-    <ChessgroundBoard
-      class="flex-shrink-0 flex-grow-0"
-      @created="(api) => (boardAPI = api)"
-    ></ChessgroundBoard>
+    <ChessgroundBoard @created="handleBoardCreated" @move="handleMove"></ChessgroundBoard>
     <aside class="min-w-[20em] max-w-[40em] min-h-40 p-1 flex-grow flex-shrink bg-base-200">
       <button class="btn btn-primary" @click="boardAPI?.toggleOrientation()">
         Toggle Orientation
       </button>
+      <div>
+        {{ fen }}
+        {{ pgn }}
+      </div>
       <div class="flex gap-2 justify-between min-w-0">
         <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>

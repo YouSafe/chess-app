@@ -7,7 +7,7 @@ import '../assets/chessground.coords.css'
 import '../assets/chessground.brown.css'
 import '../assets/chessground.cburnett.css'
 import type { Config } from 'chessground/config'
-import { BoardAPI, type BoardState, type Promotion, promotions } from '@/BoardAPI'
+import { BoardAPI, type BoardState, type Promotion, promotions, type BoardEmits } from '@/BoardAPI'
 import type { Color, Key } from 'chessground/types'
 
 const board = ref<HTMLElement | null>(null)
@@ -20,12 +20,9 @@ const boardState = reactive({
 } as BoardState)
 const boardAPI = ref<BoardAPI | null>(null)
 
-const emit = defineEmits<{
-  (e: 'created', api: BoardAPI): void
-}>()
+const emit = defineEmits<BoardEmits>()
 
-const promotionButtonPosition = (index: number, key?: Key, orientation?: Color) => {
-  if (!key || !orientation) return undefined
+const promotionButtonPosition = (index: number, key: Key, orientation: Color) => {
   const rank = key[0]
   const file = key[1]
 
@@ -57,7 +54,7 @@ onMounted(() => {
     addDimensionsCssVarsTo: promotion.value
   }
   const chessground = Chessground(board.value, config)
-  const api = new BoardAPI(chessground, config, boardState)
+  const api = new BoardAPI(chessground, config, boardState, emit)
   boardAPI.value = api
   emit('created', api)
 })
@@ -92,7 +89,7 @@ const promotionCanceled = () => {
     v-show="boardState.promotionDialogState.isEnabled"
     @click="promotionCanceled"
   >
-    <template v-if="boardState.promotionDialogState.isEnabled">
+    <template v-if="boardState.promotionDialogState.isEnabled && boardState.orientationState">
       <button
         v-for="(piece, index) in promotions"
         :key="piece.name"

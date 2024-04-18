@@ -22,7 +22,7 @@ export type PromotionDialogState =
       isEnabled: true
       color: Color
       square: Key
-      callback: (promotionValue: Promotion) => void
+      callback: (promotion: Promotion) => void
       cancel: () => void
     }
 
@@ -41,16 +41,23 @@ export interface BoardState {
   orientationState?: Color
 }
 
+export interface BoardEmits {
+  (e: 'created', api: BoardAPI): void
+  (e: 'move', move: Move): void
+}
+
 export class BoardAPI {
   private instance: Chess
   private boardApi: Api
   private config: Config
   private state: BoardState
+  private emit: BoardEmits
 
-  constructor(boardApi: Api, config: Config, state: BoardState) {
+  constructor(boardApi: Api, config: Config, state: BoardState, emit: BoardEmits) {
     this.boardApi = boardApi
     this.config = config
     this.state = state
+    this.emit = emit
     this.instance = new Chess()
     this.reset()
   }
@@ -130,6 +137,8 @@ export class BoardAPI {
       }
       return false
     }
+
+    this.emit('move', moveResult)
 
     if (this.state.viewHistoryState.isEnabled) {
       // only update when not viewing history
