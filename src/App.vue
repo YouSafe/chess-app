@@ -10,6 +10,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { ref, watch } from 'vue'
 import type { DrawShape } from 'chessground/draw'
+import { onKeyStroke } from '@vueuse/core'
 
 let boardAPI: BoardAPI | undefined
 
@@ -41,6 +42,17 @@ watch(currMove, (move) => {
   if (!move) return
   boardAPI?.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
 })
+
+const shortcuts = [
+  { key: 'ArrowUp', func: () => boardAPI?.stopViewing() },
+  { key: 'ArrowDown', func: () => boardAPI?.viewStart() },
+  { key: 'ArrowRight', func: () => boardAPI?.viewNext() },
+  { key: 'ArrowLeft', func: () => boardAPI?.viewPrevious() }
+]
+
+for (const shortcut of shortcuts) {
+  onKeyStroke(shortcut.key, shortcut.func)
+}
 </script>
 
 <template>
@@ -63,11 +75,7 @@ watch(currMove, (move) => {
         <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
         </button>
-        <button
-          @keyup.left="boardAPI?.viewPrevious()"
-          @click="boardAPI?.viewPrevious()"
-          class="btn btn-neutral flex-1"
-        >
+        <button @click="boardAPI?.viewPrevious()" class="btn btn-neutral flex-1">
           <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
         </button>
         <button
