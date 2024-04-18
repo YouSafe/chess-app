@@ -14,16 +14,30 @@ export const promotions: { name: string; value: Promotion }[] = [
   { name: 'Bishop', value: 'b' }
 ]
 
-export interface PromotionDialogState {
-  isEnabled: boolean
-  color?: Color
-  square?: Key
-  callback?: (promotionValue: Promotion) => void
-  cancel?: () => void
-}
+export type PromotionDialogState =
+  | {
+      isEnabled: false
+    }
+  | {
+      isEnabled: true
+      color: Color
+      square: Key
+      callback: (promotionValue: Promotion) => void
+      cancel: () => void
+    }
+
+export type ViewHistoryState =
+  | {
+      isEnabled: false
+    }
+  | {
+      isEnabled: true
+      viewingPly: number
+    }
 
 export interface BoardState {
   promotionDialogState: PromotionDialogState
+  viewHistoryState: ViewHistoryState
   orientationState?: Color
 }
 
@@ -42,6 +56,11 @@ export class BoardAPI {
   }
 
   private update() {
+    if (this.state.viewHistoryState.isEnabled) {
+      // do not change the actual board while viewing history
+      return
+    }
+
     this.boardApi.state.turnColor = this.getTurnColor()
 
     if (!this.boardApi.state.movable.free) {
@@ -112,6 +131,11 @@ export class BoardAPI {
       return false
     }
 
+    if (this.state.viewHistoryState.isEnabled) {
+      // only update when not viewing history
+      return true
+    }
+
     this.boardApi.move(move.from, move.to)
     if (moveResult.flags === 'e' || moveResult?.promotion) {
       this.boardApi.set({ fen: moveResult.after })
@@ -179,5 +203,68 @@ export class BoardAPI {
 
   getPgn(): string {
     return this.instance.pgn()
+  }
+
+  getCurrentPly(): number {
+    const turnColor = this.getTurnColor()
+    const turnNumber = this.instance.moveNumber()
+    return 2 * turnNumber - (turnColor === 'white' ? 2 : 1)
+  }
+
+  viewHistory(ply: number) {
+    const history = this.instance.history({ verbose: true })
+    console.log(history, ply)
+
+    if (ply < 0 || ply > history.length) return
+
+    if (ply === history.length) {
+      // we returned to our current position
+      if (this.state.viewHistoryState.isEnabled) {
+        const lastMove = history.at(-1) as Move
+
+        this.boardApi.set({
+          fen: lastMove.after,
+          lastMove: [lastMove.from, lastMove.to]
+        })
+
+        this.state.viewHistoryState = { isEnabled: false }
+        this.update()
+      }
+    } else {
+      if (!this.state.viewHistoryState.isEnabled) {
+        this.state.viewHistoryState = {
+          isEnabled: true,
+          viewingPly: ply
+        }
+      } else {
+        this.state.viewHistoryState.viewingPly = ply
+      }
+
+      this.boardApi.set({ fen: history[ply].before })
+    }
+  }
+
+  viewStart() {
+    this.viewHistory(0)
+  }
+
+  stopViewing() {
+    if (this.state.viewHistoryState.isEnabled) {
+      this.viewHistory(this.getCurrentPly())
+    }
+  }
+
+  viewNext() {
+    if (this.state.viewHistoryState.isEnabled) {
+      this.viewHistory(this.state.viewHistoryState.viewingPly + 1)
+    }
+  }
+
+  viewPrevious() {
+    if (this.state.viewHistoryState.isEnabled) {
+      this.viewHistory(this.state.viewHistoryState.viewingPly - 1)
+    } else {
+      this.viewHistory(this.getCurrentPly() - 1)
+    }
   }
 }

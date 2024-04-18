@@ -22,16 +22,16 @@ let boardAPI: BoardAPI | undefined
         Toggle Orientation
       </button>
       <div class="flex gap-2 justify-between min-w-0">
-        <button class="btn btn-neutral flex-1">
+        <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
         </button>
-        <button class="btn btn-neutral flex-1">
+        <button @click="boardAPI?.viewPrevious()" class="btn btn-neutral flex-1">
           <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
         </button>
-        <button class="btn btn-neutral flex-1">
+        <button @click="boardAPI?.viewNext()" class="btn btn-neutral flex-1">
           <ChevronRightIcon class="size-8"></ChevronRightIcon>
         </button>
-        <button class="btn btn-neutral flex-1">
+        <button @click="boardAPI?.stopViewing()" class="btn btn-neutral flex-1">
           <ChevronDoubleRightIcon class="size-8"></ChevronDoubleRightIcon>
         </button>
       </div>

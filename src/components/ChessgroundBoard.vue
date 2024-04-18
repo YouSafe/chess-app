@@ -15,6 +15,7 @@ const promotion = ref<HTMLElement | null>(null)
 
 const boardState = reactive({
   promotionDialogState: { isEnabled: false },
+  viewHistoryState: { isEnabled: false },
   orientationState: undefined
 } as BoardState)
 const boardAPI = ref<BoardAPI | null>(null)
@@ -62,40 +63,53 @@ onMounted(() => {
 })
 
 const promotionSelected = (promotion: Promotion) => {
-  boardState.promotionDialogState.callback?.(promotion)
+  if (!boardState.promotionDialogState.isEnabled) {
+    return
+  }
+
+  boardState.promotionDialogState.callback(promotion)
   boardState.promotionDialogState = { isEnabled: false }
 }
 
 const promotionCanceled = () => {
-  boardState.promotionDialogState.cancel?.()
+  if (!boardState.promotionDialogState.isEnabled) {
+    return
+  }
+  boardState.promotionDialogState.cancel()
   boardState.promotionDialogState = { isEnabled: false }
 }
 </script>
 
 <template>
-  <div ref="board" id="board"></div>
+  <div
+    ref="board"
+    id="board"
+    :style="{ filter: boardState.viewHistoryState.isEnabled ? 'saturate(60%)' : 'none' }"
+  ></div>
   <div
     ref="promotion"
     id="promotion-choice"
     v-show="boardState.promotionDialogState.isEnabled"
     @click="promotionCanceled"
   >
-    <button
-      v-for="(piece, index) in promotions"
-      :key="piece.name"
-      type="button"
-      :class="[piece.name.toLowerCase(), boardState.promotionDialogState.color]"
-      :style="
-        promotionButtonPosition(
-          index,
-          boardState.promotionDialogState.square,
-          boardState.orientationState
-        )
-      "
-      :aria-label="piece.name"
-      @click="promotionSelected(piece.value)"
-      @touchstart.passive="promotionSelected(piece.value)"
-    />
+    <template v-if="boardState.promotionDialogState.isEnabled">
+      <button
+        v-for="(piece, index) in promotions"
+        :key="piece.name"
+        type="button"
+        :class="[piece.name.toLowerCase(), boardState.promotionDialogState.color]"
+        :style="
+          promotionButtonPosition(
+            index,
+            boardState.promotionDialogState.square,
+            boardState.orientationState
+          )
+        "
+        :aria-label="piece.name"
+        @click="promotionSelected(piece.value)"
+        @touchstart.passive="promotionSelected(piece.value)"
+      />
+    </template>
   </div>
 </template>
 
