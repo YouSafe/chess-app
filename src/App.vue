@@ -20,6 +20,10 @@ const { bestMove, currMove, sendPosition } = useEngine()
 
 function handleBoardCreated(api: BoardAPI) {
   boardAPI = api
+  api.loadPgn(`[Variant "From Position"]
+[FEN "k6q/8/8/8/8/8/8/K7 w - - 0 1"]
+`)
+
   fen.value = api.getFen()
   pgn.value = api.getPgn()
 

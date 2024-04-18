@@ -223,9 +223,15 @@ export class BoardAPI {
     return 2 * turnNumber - (turnColor === 'white' ? 2 : 1)
   }
 
+  loadPgn(pgn: string) {
+    this.instance.loadPgn(pgn)
+    this.state.viewHistoryState = { isEnabled: false }
+    this.boardApi.set({ fen: this.instance.fen() })
+    this.update()
+  }
+
   viewHistory(ply: number) {
     const history = this.instance.history({ verbose: true })
-    console.log(history, ply)
 
     if (ply < 0 || ply > history.length) return
 
@@ -256,7 +262,29 @@ export class BoardAPI {
         this.state.viewHistoryState.viewingPly = ply
       }
 
-      this.boardApi.set({ fen: history[ply].before })
+      this.boardApi.set({
+        fen: history[ply].before,
+        lastMove: ply > 0 ? [history[ply - 1].from, history[ply - 1].to] : undefined
+      })
+
+      const isMoveChecking = (move: Move) => {
+        const lastSymbol = move.san.at(-1)
+        return lastSymbol === '#' || lastSymbol === '+'
+      }
+
+      const inCheck =
+        ply > 0 ? isMoveChecking(history[ply - 1]) : new Chess(history[ply].before).isCheck()
+
+      if (inCheck) {
+        for (const [key, piece] of this.boardApi.state.pieces) {
+          if (piece.role === 'king' && piece.color[0] === history[ply].color) {
+            this.boardApi.state.check = key
+            break
+          }
+        }
+      } else {
+        this.boardApi.state.check = undefined
+      }
     }
   }
 
