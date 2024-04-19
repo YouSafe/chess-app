@@ -17,7 +17,7 @@ let boardAPI: BoardAPI | undefined
 const pgn = ref<string | undefined>(undefined)
 const fen = ref<string | undefined>(undefined)
 
-const { currMove, sendPosition, evaluation } = useEngine()
+const { currMove, sendPosition, evaluation, depth } = useEngine()
 
 function handleBoardCreated(api: BoardAPI) {
   boardAPI = api
@@ -72,31 +72,34 @@ for (const shortcut of shortcuts) {
 </script>
 
 <template>
-  <div class="flex flex-wrap w-full h-full container-size">
+  <div class="flex flex-wrap w-full h-full container-size justify-center">
     <ChessgroundBoard
       @created="handleBoardCreated"
       @move="handleMove"
       @position-change="handlePositionChange"
     ></ChessgroundBoard>
     <aside
-      class="min-w-[20em] max-w-[40em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
+      class="min-w-[10em] max-w-[30em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
     >
       <div>
         <div class="form-control w-fit inline-flex">
           <label class="label cursor-pointer gap-2">
             <input type="checkbox" class="toggle" checked />
-            <span class="font-bold text-lg">{{ evaluationDisplay }}</span>
+            <span class="font-bold text-2xl">{{ evaluationDisplay }}</span>
+            <span>depth={{ depth }}</span>
           </label>
         </div>
+      </div>
+      <div>
         <button class="btn btn-sm btn-primary" @click="boardAPI?.toggleOrientation()">
           Toggle Orientation
         </button>
         <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button>
       </div>
 
-      <div>
-        <span class="block">{{ fen }}</span>
-        <span class="block">{{ pgn }}</span>
+      <div class="break-words flex-shrink">
+        <span class="min-w-0">{{ fen }}</span>
+        <span class="min-w-0">{{ pgn }}</span>
       </div>
       <div class="flex gap-2 justify-between min-w-0">
         <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">

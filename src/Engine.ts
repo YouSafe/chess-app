@@ -6,6 +6,7 @@ export function useEngine() {
   const bestMove = ref<Move | undefined>(undefined)
   const currMove = ref<Move | undefined>(undefined)
   const evaluation = ref<{ type: 'cp' | 'mate'; value: number } | undefined>(undefined)
+  const depth = ref<number | undefined>(undefined)
 
   const wasmSupport =
     typeof WebAssembly === 'object' &&
@@ -63,6 +64,8 @@ export function useEngine() {
 
         switch (key) {
           case 'depth':
+            parsed.depth = parseInt(parts[i + 1])
+            break
           case 'score':
             parsed.score = {
               type: parts[i + 1] as 'cp' | 'mate',
@@ -81,6 +84,7 @@ export function useEngine() {
         currMove.value = parseUCIMove(currmove)
       }
       evaluation.value = parsed.score
+      depth.value = parsed.depth
     }
   }
 
@@ -96,5 +100,5 @@ export function useEngine() {
     worker.postMessage('go movetime 2000')
   }
 
-  return { bestMove, currMove, sendPosition, evaluation }
+  return { bestMove, currMove, sendPosition, evaluation, depth }
 }
