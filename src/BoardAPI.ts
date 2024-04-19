@@ -44,7 +44,7 @@ export interface BoardState {
 
 export interface BoardEmits {
   (e: 'created', api: BoardAPI): void
-  (e: 'move', move: Move): void
+  (e: 'move', move?: Move): void
   (e: 'positionChange', fen: string): void
 }
 
@@ -268,6 +268,22 @@ export class BoardAPI {
     this.boardApi.set({ fen: this.instance.fen() })
     this.startPly = this.getCurrentPly()
     this.emit('positionChange', this.instance.fen())
+    this.update()
+  }
+
+  trimMoves() {
+    const viewingPly = this.getViewingPly()
+    const currentPly = this.getCurrentPly()
+
+    const toTrim = currentPly - viewingPly
+
+    for (let i = 0; i < toTrim; i++) {
+      this.instance.undo()
+    }
+
+    this.state.viewHistoryState = { isEnabled: false }
+    // technically not a move but needed to trigger the history update
+    this.emit('move')
     this.update()
   }
 

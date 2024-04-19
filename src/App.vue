@@ -103,6 +103,7 @@ for (const shortcut of shortcuts) {
           Toggle Orientation
         </button>
         <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button>
+        <button class="btn btn-sm btn-primary" @click="boardAPI?.trimMoves()">Trim</button>
       </div>
 
       <div class="break-words flex-shrink">
