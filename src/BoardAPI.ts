@@ -48,12 +48,16 @@ export interface BoardEmits {
   (e: 'positionChange', fen: string): void
 }
 
+const startpos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+
 export class BoardAPI {
   private instance: Chess
   private boardApi: Api
   private config: Config
   private state: BoardState
   private emit: BoardEmits
+
+  private startPly: number = 0
 
   constructor(boardApi: Api, config: Config, state: BoardState, emit: BoardEmits) {
     this.boardApi = boardApi
@@ -93,7 +97,7 @@ export class BoardAPI {
   }
 
   reset() {
-    const config: Config = merge(defaults() as Config, this.config)
+    const config: Config = merge(defaults() as Config, { fen: startpos } as Config, this.config)
     this.boardApi.state.selected = undefined
     if (config.orientation) {
       this.state.orientationState = config.orientation
@@ -149,10 +153,10 @@ export class BoardAPI {
       return true
     }
 
-    this.boardApi.move(move.from, move.to)
     if (moveResult.flags === 'e' || moveResult.promotion) {
       this.boardApi.set({ fen: moveResult.after })
-      this.emit('positionChange', moveResult.after)
+    } else {
+      this.boardApi.move(move.from, move.to)
     }
     this.update()
     return true
@@ -160,7 +164,18 @@ export class BoardAPI {
 
   setPosition(fen: string) {
     this.instance.load(fen)
+    this.boardApi.set({ animation: { enabled: false } })
     this.boardApi.set({ fen })
+    this.boardApi.set({ animation: { enabled: this.config.animation?.enabled } })
+
+    this.state.viewHistoryState = { isEnabled: false }
+
+    if (this.state.promotionDialogState.isEnabled) {
+      this.state.promotionDialogState.cancel()
+      this.state.promotionDialogState = { isEnabled: false }
+    }
+
+    this.startPly = this.getCurrentPly()
     this.emit('positionChange', fen)
     this.update()
   }
@@ -225,13 +240,14 @@ export class BoardAPI {
   getCurrentPly(): number {
     const turnColor = this.getTurnColor()
     const turnNumber = this.instance.moveNumber()
-    return 2 * turnNumber - (turnColor === 'white' ? 2 : 1)
+    return Math.max(2 * (turnNumber - 1), 0) + Number(turnColor === 'black')
   }
 
   loadPgn(pgn: string) {
     this.instance.loadPgn(pgn)
     this.state.viewHistoryState = { isEnabled: false }
     this.boardApi.set({ fen: this.instance.fen() })
+    this.startPly = this.getCurrentPly()
     this.emit('positionChange', this.instance.fen())
     this.update()
   }
@@ -239,9 +255,11 @@ export class BoardAPI {
   viewHistory(ply: number) {
     const history = this.instance.history({ verbose: true })
 
-    if (ply < 0 || ply > history.length) return
+    const historyIndex = ply - this.startPly
 
-    if (ply === history.length) {
+    if (historyIndex < 0 || historyIndex > history.length) return
+
+    if (historyIndex === history.length) {
       // we returned to our current position
       if (this.state.viewHistoryState.isEnabled) {
         const lastMove = history.at(-1) as Move
@@ -270,10 +288,13 @@ export class BoardAPI {
       }
 
       this.boardApi.set({
-        fen: history[ply].before,
-        lastMove: ply > 0 ? [history[ply - 1].from, history[ply - 1].to] : undefined
+        fen: history[historyIndex].before,
+        lastMove:
+          historyIndex > 0
+            ? [history[historyIndex - 1].from, history[historyIndex - 1].to]
+            : undefined
       })
-      this.emit('positionChange', history[ply].before)
+      this.emit('positionChange', history[historyIndex].before)
 
       const isMoveChecking = (move: Move) => {
         const lastSymbol = move.san.at(-1)
@@ -281,11 +302,13 @@ export class BoardAPI {
       }
 
       const inCheck =
-        ply > 0 ? isMoveChecking(history[ply - 1]) : new Chess(history[ply].before).isCheck()
+        historyIndex > 0
+          ? isMoveChecking(history[historyIndex - 1])
+          : new Chess(history[historyIndex].before).isCheck()
 
       if (inCheck) {
         for (const [key, piece] of this.boardApi.state.pieces) {
-          if (piece.role === 'king' && piece.color[0] === history[ply].color) {
+          if (piece.role === 'king' && piece.color[0] === history[historyIndex].color) {
             this.boardApi.state.check = key
             break
           }

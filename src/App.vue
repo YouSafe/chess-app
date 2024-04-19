@@ -24,8 +24,6 @@ function handleBoardCreated(api: BoardAPI) {
 
   fen.value = api.getFen()
   pgn.value = api.getPgn()
-
-  sendPosition(fen.value)
 }
 
 function handleMove() {
@@ -66,6 +64,7 @@ for (const shortcut of shortcuts) {
       <button class="btn btn-primary" @click="boardAPI?.toggleOrientation()">
         Toggle Orientation
       </button>
+      <button class="btn btn-primary" @click="boardAPI?.reset()">Reset</button>
       <div>
         {{ fen }}
         {{ pgn }}
