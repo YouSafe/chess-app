@@ -42,9 +42,9 @@ const movePairs = computed(() => {
 </script>
 
 <template>
-  <div class="py-5 flex gap-2 items-baseline">
+  <div class="py-5 flex flex-wrap gap-2 items-baseline">
     <template v-for="(move, index) of movePairs" :key="index">
-      <span class="pl-2">{{ move.moveNumber }}.</span>
+      <span class="">{{ move.moveNumber }}.</span>
       <span v-if="index === 0 && move.white === undefined">...</span>
       <span
         v-if="move.white"
