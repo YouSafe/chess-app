@@ -281,6 +281,8 @@ export class BoardAPI {
       this.instance.undo()
     }
 
+    // TODO: this should rather restore the old state of viewOnly before the user started viewing the history
+    this.boardApi.set({ viewOnly: false })
     this.state.viewHistoryState = { isEnabled: false }
     // technically not a move but needed to trigger the history update
     this.emit('move')
@@ -298,6 +300,7 @@ export class BoardAPI {
         const lastMove = history.at(-1) as Move
 
         this.boardApi.set({
+          viewOnly: false,
           fen: lastMove.after,
           lastMove: [lastMove.from, lastMove.to]
         })
@@ -322,6 +325,8 @@ export class BoardAPI {
       }
 
       this.boardApi.set({
+        // TODO: this should rather restore the old state of viewOnly before the user started viewing the history
+        viewOnly: true,
         fen: history[historyIndex].before,
         lastMove:
           historyIndex > 0
