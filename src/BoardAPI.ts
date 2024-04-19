@@ -237,10 +237,29 @@ export class BoardAPI {
     return this.instance.pgn()
   }
 
+  getStartPly(): number {
+    return this.startPly
+  }
+
+  getHistory(): string[]
+  getHistory(verbose: false): string[]
+  getHistory(verbose: true): Move[]
+  getHistory(verbose = false): Move[] | string[] {
+    return this.instance.history({ verbose: verbose })
+  }
+
   getCurrentPly(): number {
     const turnColor = this.getTurnColor()
     const turnNumber = this.instance.moveNumber()
     return Math.max(2 * (turnNumber - 1), 0) + Number(turnColor === 'black')
+  }
+
+  getViewingPly(): number {
+    if (this.state.viewHistoryState.isEnabled) {
+      return this.state.viewHistoryState.viewingPly
+    } else {
+      return this.getCurrentPly()
+    }
   }
 
   loadPgn(pgn: string) {
@@ -257,8 +276,6 @@ export class BoardAPI {
 
     const historyIndex = ply - this.startPly
 
-    if (historyIndex < 0 || historyIndex > history.length) return
-
     if (historyIndex === history.length) {
       // we returned to our current position
       if (this.state.viewHistoryState.isEnabled) {
@@ -268,9 +285,10 @@ export class BoardAPI {
           fen: lastMove.after,
           lastMove: [lastMove.from, lastMove.to]
         })
-        this.emit('positionChange', lastMove.after)
 
         this.state.viewHistoryState = { isEnabled: false }
+
+        this.emit('positionChange', lastMove.after)
         this.update()
       }
     } else {

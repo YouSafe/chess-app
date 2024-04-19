@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
+import HistoryViewer from '@/components/HistoryViewer.vue'
 import type { BoardAPI } from './BoardAPI'
 import { useEngine } from '@/Engine'
 import {
@@ -16,11 +17,14 @@ let boardAPI: BoardAPI | undefined
 
 const pgn = ref<string | undefined>(undefined)
 const fen = ref<string | undefined>(undefined)
+const history = ref<string[] | undefined>(undefined)
+const startPly = ref<number | undefined>(undefined)
+const viewingPly = ref<number | undefined>(undefined)
 
 const { currMove, sendPosition, evaluation, depth } = useEngine()
 
 function handleBoardCreated(api: BoardAPI) {
-  boardAPI = api
+  boardAPI = api as BoardAPI | undefined
 
   fen.value = api.getFen()
   pgn.value = api.getPgn()
@@ -28,10 +32,14 @@ function handleBoardCreated(api: BoardAPI) {
 
 function handleMove() {
   pgn.value = boardAPI?.getPgn()
+
+  history.value = boardAPI?.getHistory()
 }
 
 function handlePositionChange(positionFen: string) {
   fen.value = positionFen
+  startPly.value = boardAPI?.getStartPly()
+  viewingPly.value = boardAPI?.getViewingPly()
 
   sendPosition(positionFen)
 }
@@ -99,8 +107,13 @@ for (const shortcut of shortcuts) {
 
       <div class="break-words flex-shrink">
         <span class="min-w-0">{{ fen }}</span>
-        <span class="min-w-0">{{ pgn }}</span>
       </div>
+      <HistoryViewer
+        :moves="history"
+        :start-ply="startPly"
+        :viewing-ply="viewingPly ?? 0"
+        :board-api="boardAPI"
+      ></HistoryViewer>
       <div class="flex gap-2 justify-between min-w-0">
         <button @click="boardAPI?.viewStart()" class="btn btn-neutral flex-1">
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
