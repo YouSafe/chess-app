@@ -42,24 +42,26 @@ const movePairs = computed(() => {
 </script>
 
 <template>
-  <div class="py-5 flex flex-wrap gap-2 items-baseline">
+  <div class="py-5 flex flex-wrap gap-2 items-baseline min-h-10 h-fit">
     <template v-for="(move, index) of movePairs" :key="index">
-      <span class="">{{ move.moveNumber }}.</span>
-      <span v-if="index === 0 && move.white === undefined">...</span>
-      <span
-        v-if="move.white"
-        class="badge badge-neutral"
-        :class="{ 'badge-primary': move.white.plyAfter === viewingPly }"
-        @click="boardApi?.viewHistory(move.white.plyAfter)"
-        >{{ move.white.move }}</span
-      >
-      <span
-        v-if="move.black"
-        class="badge badge-neutral"
-        :class="{ 'badge-primary': move.black.plyAfter === viewingPly }"
-        @click="boardApi?.viewHistory(move.black.plyAfter)"
-        >{{ move.black.move }}</span
-      >
+      <div class="flex gap-1 items-baseline">
+        <span>{{ move.moveNumber }}.</span>
+        <span v-if="index === 0 && move.white === undefined">...</span>
+        <span
+          v-if="move.white"
+          class="badge badge-neutral"
+          :class="{ 'badge-primary': move.white.plyAfter === viewingPly }"
+          @click="boardApi?.viewHistory(move.white.plyAfter)"
+          >{{ move.white.move }}</span
+        >
+        <span
+          v-if="move.black"
+          class="badge badge-neutral"
+          :class="{ 'badge-primary': move.black.plyAfter === viewingPly }"
+          @click="boardApi?.viewHistory(move.black.plyAfter)"
+          >{{ move.black.move }}</span
+        >
+      </div>
     </template>
   </div>
 </template>
