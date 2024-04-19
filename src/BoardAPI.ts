@@ -134,6 +134,9 @@ export class BoardAPI {
   }
 
   move(move: Move): boolean {
+    if (this.state.viewHistoryState.isEnabled) {
+      this.trimMoves()
+    }
     let moveResult: Move
     try {
       moveResult = this.instance.move(move)
@@ -198,11 +201,11 @@ export class BoardAPI {
     this.boardApi.redrawAll()
   }
 
-  private legalMoves(): Map<Key, Key[]> {
+  private legalMoves(position: Chess = this.instance): Map<Key, Key[]> {
     const dests: Map<Key, Key[]> = new Map()
 
     for (const square of SQUARES) {
-      const moves = this.instance.moves({ square, verbose: true })
+      const moves = position.moves({ square, verbose: true })
       if (moves.length > 0) {
         dests.set(
           moves[0].from,
@@ -281,8 +284,6 @@ export class BoardAPI {
       this.instance.undo()
     }
 
-    // TODO: this should rather restore the old state of viewOnly before the user started viewing the history
-    this.boardApi.set({ viewOnly: false })
     this.state.viewHistoryState = { isEnabled: false }
     // technically not a move but needed to trigger the history update
     this.emit('move')
@@ -300,7 +301,6 @@ export class BoardAPI {
         const lastMove = history.at(-1) as Move
 
         this.boardApi.set({
-          viewOnly: false,
           fen: lastMove.after,
           lastMove: [lastMove.from, lastMove.to]
         })
@@ -324,9 +324,14 @@ export class BoardAPI {
         this.state.viewHistoryState.viewingPly = ply
       }
 
+      const position = new Chess(history[historyIndex].before)
+
       this.boardApi.set({
-        // TODO: this should rather restore the old state of viewOnly before the user started viewing the history
-        viewOnly: true,
+        turnColor: history[historyIndex].color === 'w' ? 'white' : 'black',
+        movable: {
+          dests: this.legalMoves(position),
+          color: history[historyIndex].color === 'w' ? 'white' : 'black'
+        },
         fen: history[historyIndex].before,
         lastMove:
           historyIndex > 0
