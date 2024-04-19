@@ -78,45 +78,53 @@ const promotionCanceled = () => {
 </script>
 
 <template>
-  <div
-    ref="board"
-    id="board"
-    :style="{ filter: boardState.viewHistoryState.isEnabled ? 'saturate(60%)' : 'none' }"
-  ></div>
-  <div
-    ref="promotion"
-    id="promotion-choice"
-    v-show="boardState.promotionDialogState.isEnabled"
-    @click="promotionCanceled"
-  >
-    <template v-if="boardState.promotionDialogState.isEnabled && boardState.orientationState">
-      <button
-        v-for="(piece, index) in promotions"
-        :key="piece.name"
-        type="button"
-        :class="[piece.name.toLowerCase(), boardState.promotionDialogState.color]"
-        :style="
-          promotionButtonPosition(
-            index,
-            boardState.promotionDialogState.square,
-            boardState.orientationState
-          )
-        "
-        :aria-label="piece.name"
-        @click="promotionSelected(piece.value)"
-        @touchstart.passive="promotionSelected(piece.value)"
-      />
-    </template>
+  <div class="main-board">
+    <div
+      ref="board"
+      id="board"
+      :style="{ filter: boardState.viewHistoryState.isEnabled ? 'saturate(60%)' : 'none' }"
+    ></div>
+    <div
+      ref="promotion"
+      id="promotion-choice"
+      v-show="boardState.promotionDialogState.isEnabled"
+      @click="promotionCanceled"
+    >
+      <template v-if="boardState.promotionDialogState.isEnabled && boardState.orientationState">
+        <button
+          v-for="(piece, index) in promotions"
+          :key="piece.name"
+          type="button"
+          :class="[piece.name.toLowerCase(), boardState.promotionDialogState.color]"
+          :style="
+            promotionButtonPosition(
+              index,
+              boardState.promotionDialogState.square,
+              boardState.orientationState
+            )
+          "
+          :aria-label="piece.name"
+          @click="promotionSelected(piece.value)"
+          @touchstart.passive="promotionSelected(piece.value)"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
 <style>
+.main-board {
+  position: relative;
+}
+
 #board {
   width: 100cqmin;
   height: 100cqmin;
 }
 
 #promotion-choice {
+  top: 0;
+  left: 0;
   width: var(--cg-width, 100%);
   height: var(--cg-height, 100%);
   z-index: 205;

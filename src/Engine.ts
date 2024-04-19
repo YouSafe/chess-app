@@ -60,7 +60,6 @@ export function useEngine() {
 
       for (let i = 0; i < parts.length; i++) {
         const key = parts[i]
-        const value = parseInt(parts[i + 1])
 
         switch (key) {
           case 'depth':
@@ -92,7 +91,6 @@ export function useEngine() {
   function sendPosition(position: string) {
     bestMove.value = undefined
     currMove.value = undefined
-    evaluation.value = undefined
 
     worker.postMessage(`position fen ${position} moves `)
     worker.postMessage('go movetime 2000')
