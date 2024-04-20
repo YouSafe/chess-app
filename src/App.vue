@@ -8,7 +8,7 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
@@ -59,9 +59,38 @@ const shortcuts = [
 for (const shortcut of shortcuts) {
   onKeyStroke(shortcut.key, shortcut.func)
 }
+
+const importedPGN = ref('')
 </script>
 
 <template>
+  <dialog id="import_pgn_dialog" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">Load PGN</h3>
+      <label class="form-control">
+        <div class="label">
+          <span class="label-text">Portable Game Notation</span>
+        </div>
+        <textarea
+          type="text"
+          class="textarea leading-snug textarea-bordered"
+          rows="10"
+          v-model="importedPGN"
+        ></textarea>
+      </label>
+
+      <div class="modal-action">
+        <form method="dialog" class="flex gap-2">
+          <button class="btn btn-primary" @click="() => api.loadPgn(importedPGN)">Load</button>
+          <button class="btn btn-ghost">Close</button>
+        </form>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
   <div class="flex flex-wrap w-full h-full container-size justify-center">
     <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
     <aside
@@ -79,6 +108,9 @@ for (const shortcut of shortcuts) {
       <div>
         <button class="btn btn-sm btn-primary" @click="api.toggleOrientation()">
           Toggle Orientation
+        </button>
+        <button class="btn btn-sm btn-primary" onclick="import_pgn_dialog.showModal()">
+          Load PGN
         </button>
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
