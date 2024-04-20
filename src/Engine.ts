@@ -1,6 +1,6 @@
 import type { Move, Square } from 'chess.js'
-import type { Promotion } from './BoardAPI'
 import { ref } from 'vue'
+import type { Promotion } from './useChess'
 
 export function useEngine() {
   const bestMove = ref<Move | undefined>(undefined)
@@ -39,10 +39,10 @@ export function useEngine() {
       return
     }
 
-    if (uciStringSplitted[0] === 'readyok') {
-      worker.postMessage('go movetime 1500')
-      return
-    }
+    // if (uciStringSplitted[0] === 'readyok') {
+    //   worker.postMessage('go movetime 1500')
+    //   return
+    // }
 
     if (uciStringSplitted[0] === 'bestmove' && uciStringSplitted[1]) {
       const move = uciStringSplitted[1]

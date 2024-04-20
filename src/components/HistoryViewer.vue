@@ -1,27 +1,21 @@
 <script setup lang="ts">
-import type { BoardAPI } from '@/BoardAPI'
-import { computed } from 'vue'
+import type { API, ChessState } from '@/useChess'
+import type { Move } from 'chess.js'
+import { computed, toRefs, type DeepReadonly } from 'vue'
 
-const props = defineProps<{
-  moves?: string[]
-  startPly?: number
-  viewingPly: number
-  boardApi?: BoardAPI
-}>()
+const props = defineProps<{ state: DeepReadonly<ChessState>; api: API }>()
+const { api, state } = toRefs(props)
 
 const movePairs = computed(() => {
-  const moves = props.moves
-  const startPly = props.startPly
-  if (!moves || startPly === undefined) {
-    return []
-  }
+  const moves = state.value.history
+  const startPly = state.value.startPly
   const pairs: {
     moveNumber: number
-    white?: { move: string; plyAfter: number }
-    black?: { move: string; plyAfter: number }
+    white?: { move: Move; plyAfter: number }
+    black?: { move: Move; plyAfter: number }
   }[] = []
 
-  if (startPly % 2 === 1) {
+  if (startPly % 2 === 1 && moves.length > 0) {
     pairs.push({
       moveNumber: Math.floor(startPly / 2) + 1,
       white: undefined,
@@ -29,7 +23,7 @@ const movePairs = computed(() => {
     })
   }
 
-  for (let i = startPly % 2; i < props.moves.length; i += 2) {
+  for (let i = startPly % 2; i < moves.length; i += 2) {
     const moveIndex = Math.floor((i + startPly) / 2) + 1
     pairs.push({
       moveNumber: moveIndex,
@@ -50,16 +44,16 @@ const movePairs = computed(() => {
         <span
           v-if="move.white"
           class="badge badge-neutral"
-          :class="{ 'badge-primary': move.white.plyAfter === viewingPly }"
-          @click="boardApi?.viewHistory(move.white.plyAfter)"
-          >{{ move.white.move }}</span
+          :class="{ 'badge-primary': move.white.plyAfter === state.viewingPly }"
+          @click="api.viewGamePly(move.white.plyAfter)"
+          >{{ move.white.move.san }}</span
         >
         <span
           v-if="move.black"
           class="badge badge-neutral"
-          :class="{ 'badge-primary': move.black.plyAfter === viewingPly }"
-          @click="boardApi?.viewHistory(move.black.plyAfter)"
-          >{{ move.black.move }}</span
+          :class="{ 'badge-primary': move.black.plyAfter === state.viewingPly }"
+          @click="api.viewGamePly(move.black.plyAfter)"
+          >{{ move.black.move.san }}</span
         >
       </div>
     </template>
