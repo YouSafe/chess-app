@@ -91,7 +91,7 @@ const importedPGN = ref('')
     </form>
   </dialog>
 
-  <div class="flex flex-wrap w-full h-full container-size justify-center">
+  <div class="flex flex-wrap justify-center">
     <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
     <aside
       class="min-w-[10em] max-w-[30em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
