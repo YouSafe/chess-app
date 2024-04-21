@@ -121,16 +121,32 @@ const importedPGN = ref('')
       <HistoryViewer :api="api" :state="state"></HistoryViewer>
 
       <div class="flex gap-2 justify-between min-w-0">
-        <button @click="api.viewStart()" class="btn btn-neutral flex-1">
+        <button
+          @click="api.viewStart()"
+          class="btn btn-neutral flex-1"
+          :disabled="state.viewingPly == state.startPly"
+        >
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
         </button>
-        <button @click="api.viewPrevious()" class="btn btn-neutral flex-1">
+        <button
+          @click="api.viewPrevious()"
+          class="btn btn-neutral flex-1"
+          :disabled="state.viewingPly == state.startPly"
+        >
           <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
         </button>
-        <button @click="api.viewNext()" class="btn btn-neutral flex-1">
+        <button
+          @click="api.viewNext()"
+          class="btn btn-neutral flex-1"
+          :disabled="state.viewingPly == state.currentPly"
+        >
           <ChevronRightIcon class="size-8"></ChevronRightIcon>
         </button>
-        <button @click="api.viewCurrent()" class="btn btn-neutral flex-1">
+        <button
+          @click="api.viewCurrent()"
+          class="btn btn-neutral flex-1"
+          :disabled="state.viewingPly == state.currentPly"
+        >
           <ChevronDoubleRightIcon class="size-8"></ChevronDoubleRightIcon>
         </button>
       </div>
