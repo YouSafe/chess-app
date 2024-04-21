@@ -81,8 +81,18 @@ const importedPGN = ref('')
 
       <div class="modal-action">
         <form method="dialog" class="flex gap-2">
-          <button class="btn btn-primary" @click="() => api.loadPgn(importedPGN)">Load</button>
-          <button class="btn btn-ghost">Close</button>
+          <button
+            class="btn btn-primary"
+            @click="
+              () => {
+                api.loadPgn(importedPGN)
+                importedPGN = ''
+              }
+            "
+          >
+            Load
+          </button>
+          <button class="btn btn-ghost" @click="importedPGN = ''">Close</button>
         </form>
       </div>
     </div>
