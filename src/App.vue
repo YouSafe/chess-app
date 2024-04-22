@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
 import HistoryViewer from '@/components/HistoryViewer.vue'
+import LoadPgnModal from '@/components/LoadPgnModal.vue'
 import { useEngine } from '@/Engine'
 import {
   ChevronLeftIcon,
@@ -103,8 +104,6 @@ for (const shortcut of shortcuts) {
   onKeyStroke(shortcut.key, shortcut.func)
 }
 
-const importedPGN = ref('')
-
 watch(playAgainstComputer, () => {
   if (playAgainstComputer.value) {
     api.value.setPlayerColor(state.value.viewing.orientation)
@@ -112,45 +111,12 @@ watch(playAgainstComputer, () => {
     api.value.setPlayerColor(undefined)
   }
 })
+
+const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
 </script>
 
 <template>
-  <dialog id="import_pgn_dialog" class="modal">
-    <div class="modal-box">
-      <h3 class="font-bold text-lg">Load PGN</h3>
-      <label class="form-control">
-        <div class="label">
-          <span class="label-text">Portable Game Notation</span>
-        </div>
-        <textarea
-          type="text"
-          class="textarea leading-snug textarea-bordered"
-          rows="10"
-          v-model="importedPGN"
-        ></textarea>
-      </label>
-
-      <div class="modal-action">
-        <form method="dialog" class="flex gap-2">
-          <button
-            class="btn btn-primary"
-            @click="
-              () => {
-                api.loadPgn(importedPGN)
-                importedPGN = ''
-              }
-            "
-          >
-            Load
-          </button>
-          <button class="btn btn-ghost" @click="importedPGN = ''">Close</button>
-        </form>
-      </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
-    </form>
-  </dialog>
+  <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)"></LoadPgnModal>
 
   <div class="flex flex-wrap justify-center">
     <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
@@ -176,9 +142,7 @@ watch(playAgainstComputer, () => {
         <button class="btn btn-sm btn-primary" @click="api.toggleOrientation()">
           Toggle Orientation
         </button>
-        <button class="btn btn-sm btn-primary" onclick="import_pgn_dialog.showModal()">
-          Load PGN
-        </button>
+        <button class="btn btn-sm btn-primary" @click="loadPgnModal?.show()">Load PGN</button>
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
 
