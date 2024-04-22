@@ -2,13 +2,9 @@
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
 import HistoryViewer from '@/components/HistoryViewer.vue'
 import LoadPgnModal from '@/components/LoadPgnModal.vue'
+import HistoryNavigator from '@/components/HistoryNavigator.vue'
 import { useEngine } from '@/Engine'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon
-} from '@heroicons/vue/24/outline'
+
 import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
@@ -150,38 +146,8 @@ const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
         <span class="min-w-0">{{ state.viewing.fen }}</span>
       </div>
 
-      <HistoryViewer :api="api" :state="state"></HistoryViewer>
-
-      <div class="flex gap-2 justify-between min-w-0">
-        <button
-          @click="api.viewStart()"
-          class="btn btn-neutral flex-1"
-          :disabled="state.viewing.ply == state.start.ply"
-        >
-          <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
-        </button>
-        <button
-          @click="api.viewPrevious()"
-          class="btn btn-neutral flex-1"
-          :disabled="state.viewing.ply == state.start.ply"
-        >
-          <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
-        </button>
-        <button
-          @click="api.viewNext()"
-          class="btn btn-neutral flex-1"
-          :disabled="state.viewing.ply == state.current.ply"
-        >
-          <ChevronRightIcon class="size-8"></ChevronRightIcon>
-        </button>
-        <button
-          @click="api.viewCurrent()"
-          class="btn btn-neutral flex-1"
-          :disabled="state.viewing.ply == state.current.ply"
-        >
-          <ChevronDoubleRightIcon class="size-8"></ChevronDoubleRightIcon>
-        </button>
-      </div>
+      <HistoryViewer :api="api" :state="state" />
+      <HistoryNavigator :api="api" :state="state" />
     </aside>
   </div>
 </template>
