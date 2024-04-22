@@ -120,7 +120,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
   <div class="flex flex-wrap justify-center">
     <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
     <aside
-      class="min-w-[10em] max-w-[30em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
+      class="min-w-[5em] max-w-[30em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
     >
       <div>
         <div class="form-control w-fit inline-flex">
@@ -144,10 +144,6 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
         <button class="btn btn-sm btn-primary" @click="loadPgnModal?.show()">Load PGN</button>
         <button class="btn btn-sm btn-primary" @click="shareGameModal?.show()">Share</button>
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
-      </div>
-
-      <div class="break-words flex-shrink">
-        <span class="min-w-0">{{ state.viewing.fen }}</span>
       </div>
 
       <HistoryViewer :api="api" :state="state" />
