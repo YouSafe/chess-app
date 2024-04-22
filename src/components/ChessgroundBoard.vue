@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Chessground } from 'chessground'
-import { onMounted, ref, type DeepReadonly, toRefs, watch, nextTick, computed } from 'vue'
+import { onMounted, ref, type DeepReadonly, toRefs, watch, nextTick } from 'vue'
 
 import '../assets/chessground.base.css'
 import '../assets/chessground.coords.css'
@@ -34,8 +34,6 @@ const promotionButtonPosition = (index: number, key: Key, orientation: Color) =>
   // row-start/col-start/row-end/col-end
   return `grid-area: ${gridRowIndex + 1} / ${gridColIndex + 1} /  span 1  / span 1`
 }
-
-const isViewingHistory = computed(() => state.value.viewing.ply !== state.value.current.ply)
 
 onMounted(() => {
   if (board.value === null) {
@@ -74,7 +72,10 @@ onMounted(() => {
     if (!config.movable?.free) {
       chessground.state.movable.dests = state.value.viewing.legalMoves as Dests
 
-      if (isViewingHistory.value && state.value.current.playerColor !== undefined) {
+      if (
+        state.value.viewing.ply !== state.value.current.ply &&
+        state.value.current.playerColor !== undefined
+      ) {
         chessground.state.movable.color = undefined
       } else {
         chessground.state.movable.color =
@@ -82,11 +83,7 @@ onMounted(() => {
       }
     }
 
-    if (config.premovable?.enabled) {
-      chessground.state.premovable.enabled = !isViewingHistory.value
-    }
-
-    if (isViewingHistory.value) {
+    if (state.value.viewing.ply === state.value.current.ply) {
       nextTick(chessground.playPremove)
     } else {
       chessground.cancelPremove()
@@ -145,7 +142,9 @@ onMounted(() => {
     <div
       ref="board"
       id="board"
-      :style="{ filter: isViewingHistory ? 'saturate(60%)' : 'none' }"
+      :style="{
+        filter: state.viewing.ply !== state.current.ply ? 'saturate(60%)' : 'none'
+      }"
     ></div>
     <div
       ref="promotion"
