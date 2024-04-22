@@ -2,6 +2,7 @@
 import ChessgroundBoard from '@/components/ChessgroundBoard.vue'
 import HistoryViewer from '@/components/HistoryViewer.vue'
 import LoadPgnModal from '@/components/LoadPgnModal.vue'
+import ShareGameModal from '@/components/ShareGameModal.vue'
 import HistoryNavigator from '@/components/HistoryNavigator.vue'
 import { useEngine } from '@/Engine'
 
@@ -109,10 +110,12 @@ watch(playAgainstComputer, () => {
 })
 
 const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
+const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 </script>
 
 <template>
-  <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)"></LoadPgnModal>
+  <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)" />
+  <ShareGameModal ref="shareGameModal" :pgn="state.current.pgn" :fen="state.viewing.fen" />
 
   <div class="flex flex-wrap justify-center">
     <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
@@ -139,6 +142,7 @@ const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
           Toggle Orientation
         </button>
         <button class="btn btn-sm btn-primary" @click="loadPgnModal?.show()">Load PGN</button>
+        <button class="btn btn-sm btn-primary" @click="shareGameModal?.show()">Share</button>
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
 
