@@ -76,7 +76,7 @@ export class API {
       fullMovesToGamePly(fromShortColor(this.position.turn()), this.position.moveNumber()) -
       history.length
     const fen = this.position.fen()
-    const startFen = history[0].before || fen
+    const startFen = history.at(0)?.before || fen
 
     this.state.value = {
       start: {
