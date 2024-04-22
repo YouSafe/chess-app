@@ -8,32 +8,75 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
 
+const playAgainstComputer = ref(false)
+
 const { state, api } = useChess()
 
-const { currMove, sendPosition, evaluation, depth } = useEngine()
+const {
+  turnColor: engineTurnColor,
+  bestMove,
+  currMove,
+  sendPosition,
+  evaluation,
+  depth
+} = useEngine()
 
 watch(
-  () => state.value.fen,
-  () => sendPosition(state.value.fen),
+  () => state.value.current.fen,
+  () => {
+    if (state.value.current.playerColor !== undefined) {
+      const moves = state.value.current.history.map((move) => move.lan).join(' ')
+
+      sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
+    }
+  },
   { immediate: true }
 )
 
-watch(currMove, (move) => {
-  if (!move) {
-    api.value.setAutoShapes([])
-  } else {
+watch(
+  () => state.value.viewing.fen,
+  () => {
+    if (state.value.current.playerColor === undefined) {
+      const historyIndex = state.value.viewing.ply - state.value.start.ply
+      const moves = state.value.current.history
+        .slice(0, historyIndex)
+        .map((move) => move.lan)
+        .join(' ')
+
+      sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
+    }
+  },
+  { immediate: true }
+)
+
+watchEffect(() => {
+  if (
+    playAgainstComputer.value &&
+    state.value.current.turnColor !== state.value.viewing.orientation
+  ) {
+    if (bestMove.value) {
+      api.value.move(bestMove.value)
+    }
+  }
+})
+
+watchEffect(() => {
+  if (currMove.value && !playAgainstComputer.value) {
+    const move = currMove.value
     api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
+  } else {
+    api.value.setAutoShapes([])
   }
 })
 
 const evaluationDisplay = computed(() => {
   if (!evaluation.value) return null
-  const modifier = state.value.turnColor === 'black' ? -1 : 1
+  const modifier = engineTurnColor.value === 'black' ? -1 : 1
   const { type, value } = {
     type: evaluation.value.type,
     value: evaluation.value.value * modifier
@@ -61,6 +104,14 @@ for (const shortcut of shortcuts) {
 }
 
 const importedPGN = ref('')
+
+watch(playAgainstComputer, () => {
+  if (playAgainstComputer.value) {
+    api.value.setPlayerColor(state.value.viewing.orientation)
+  } else {
+    api.value.setPlayerColor(undefined)
+  }
+})
 </script>
 
 <template>
@@ -114,6 +165,12 @@ const importedPGN = ref('')
             <span>depth={{ depth }}</span>
           </label>
         </div>
+        <div class="form-control w-fit inline-flex">
+          <label class="label cursor-pointer gap-2">
+            <input type="checkbox" class="toggle" v-model="playAgainstComputer" />
+            <span class="">Play against computer</span>
+          </label>
+        </div>
       </div>
       <div>
         <button class="btn btn-sm btn-primary" @click="api.toggleOrientation()">
@@ -126,36 +183,37 @@ const importedPGN = ref('')
       </div>
 
       <div class="break-words flex-shrink">
-        <span class="min-w-0">{{ state.fen }}</span>
+        <span class="min-w-0">{{ state.viewing.fen }}</span>
       </div>
+
       <HistoryViewer :api="api" :state="state"></HistoryViewer>
 
       <div class="flex gap-2 justify-between min-w-0">
         <button
           @click="api.viewStart()"
           class="btn btn-neutral flex-1"
-          :disabled="state.viewingPly == state.startPly"
+          :disabled="state.viewing.ply == state.start.ply"
         >
           <ChevronDoubleLeftIcon class="size-8"></ChevronDoubleLeftIcon>
         </button>
         <button
           @click="api.viewPrevious()"
           class="btn btn-neutral flex-1"
-          :disabled="state.viewingPly == state.startPly"
+          :disabled="state.viewing.ply == state.start.ply"
         >
           <ChevronLeftIcon class="size-8"></ChevronLeftIcon>
         </button>
         <button
           @click="api.viewNext()"
           class="btn btn-neutral flex-1"
-          :disabled="state.viewingPly == state.currentPly"
+          :disabled="state.viewing.ply == state.current.ply"
         >
           <ChevronRightIcon class="size-8"></ChevronRightIcon>
         </button>
         <button
           @click="api.viewCurrent()"
           class="btn btn-neutral flex-1"
-          :disabled="state.viewingPly == state.currentPly"
+          :disabled="state.viewing.ply == state.current.ply"
         >
           <ChevronDoubleRightIcon class="size-8"></ChevronDoubleRightIcon>
         </button>

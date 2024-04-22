@@ -1,6 +1,6 @@
 import type { DrawShape } from 'chessground/draw'
 import { ref, shallowRef, type Ref, readonly } from 'vue'
-import type { Color, Key } from 'chessground/types'
+import type { Color, Dests, Key } from 'chessground/types'
 import { Chess, SQUARES, type Move, type Square, type Color as ShortColor } from 'chess.js'
 import { opposite } from 'chessground/util'
 
@@ -27,22 +27,29 @@ export type PromotionDialogState =
       cancel: () => void
     }
 
-export type ViewHistoryState = { isEnabled: boolean }
-
 export interface ChessState {
-  autoShapes: DrawShape[]
-  orientation: Color
-  history: Move[]
-  fen: string
-  pgn: string
-  legalMoves: Map<Key, Key[]>
-  check: Key | undefined
-  viewHistory: ViewHistoryState
-  promotionDialog: PromotionDialogState
-  turnColor: Color
-  startPly: number
-  viewingPly: number
-  currentPly: number
+  start: {
+    fen: string
+    ply: number
+  }
+  current: {
+    fen: string
+    pgn: string
+    ply: number
+    history: Move[]
+    turnColor: Color
+    playerColor: Color | undefined
+  }
+  viewing: {
+    promotionDialog: PromotionDialogState
+    ply: number
+    fen: string
+    legalMoves: Dests
+    autoShapes: DrawShape[]
+    orientation: Color
+    check: Key | undefined
+    turnColor: Color
+  }
 }
 
 export class API {
@@ -58,32 +65,57 @@ export class API {
   }
 
   loadPgn(pgn: string) {
+    this.promotionCanceled()
+
+    // TODO: remove the selection and premove
+
     this.position.loadPgn(pgn)
-    this.state.value.fen = this.position.fen()
-    this.state.value.pgn = this.position.pgn()
-    this.state.value.history = this.position.history({ verbose: true })
-    this.state.value.turnColor = fromShortColor(this.position.turn())
-    this.state.value.legalMoves = legalMoves(this.position)
-    this.state.value.viewingPly = this.state.value.currentPly = this.getCurrentPly()
-    this.state.value.startPly = this.state.value.currentPly - this.position.history().length
-    this.state.value.check = kingCheckSquare(this.position, this.state.value.turnColor)
+
+    const history = this.position.history({ verbose: true })
+    const startPly =
+      fullMovesToGamePly(fromShortColor(this.position.turn()), this.position.moveNumber()) -
+      history.length
+    const fen = this.position.fen()
+    const startFen = history[0].before || fen
+
+    this.state.value = {
+      start: {
+        fen: startFen,
+        ply: startPly
+      },
+      current: {
+        fen: fen,
+        pgn: this.position.pgn(),
+        history: history,
+        playerColor: this.state.value.current.playerColor,
+        ply: startPly + history.length,
+        turnColor: fromShortColor(this.position.turn())
+      },
+      viewing: {
+        fen: startFen,
+        autoShapes: [],
+        orientation: this.state.value.viewing.orientation,
+        check: kingCheckSquare(this.position, fromShortColor(this.position.turn())),
+        legalMoves: legalMoves(this.position),
+        ply: startPly,
+        promotionDialog: { isEnabled: false },
+        turnColor: fromShortColor(this.position.turn())
+      }
+    }
   }
 
-  setPosition(fen: string) {
-    this.position.load(fen)
-    this.state.value.fen = this.position.fen()
-    this.state.value.pgn = this.position.pgn()
-    this.state.value.history = this.position.history({ verbose: true })
-    this.state.value.turnColor = fromShortColor(this.position.turn())
-    this.state.value.legalMoves = legalMoves(this.position)
-    this.state.value.viewingPly = this.state.value.currentPly = this.getCurrentPly()
-    this.state.value.startPly = this.state.value.currentPly - this.position.history().length
-    this.state.value.check = kingCheckSquare(this.position, this.state.value.turnColor)
+  setPlayerColor(color: Color | undefined) {
+    this.state.value.current.playerColor = color
   }
 
   async move(move: Move) {
-    if (this.state.value.viewHistory.isEnabled) {
+    if (
+      this.state.value.current.playerColor === undefined &&
+      this.state.value.current.ply !== this.state.value.viewing.ply
+    ) {
       this.trimMoves()
+    } else {
+      this.viewCurrent()
     }
 
     const piece = this.position.get(move.from as Square)
@@ -93,7 +125,7 @@ export class API {
     if (piece?.type === 'p' && move.to[1] === promotionFile) {
       try {
         promotion = await new Promise((resolve, reject) => {
-          this.state.value.promotionDialog = {
+          this.state.value.viewing.promotionDialog = {
             isEnabled: true,
             color: fromShortColor(this.position.turn()),
             square: move.to,
@@ -107,26 +139,32 @@ export class API {
     }
 
     this.position.move({ ...move, promotion })
-    this.state.value.fen = this.position.fen()
-    this.state.value.pgn = this.position.pgn()
-    this.state.value.history = this.position.history({ verbose: true })
-    this.state.value.turnColor = fromShortColor(this.position.turn())
-    this.state.value.legalMoves = legalMoves(this.position)
-    this.state.value.viewingPly = this.state.value.currentPly = this.getCurrentPly()
-    this.state.value.check = kingCheckSquare(this.position, this.state.value.turnColor)
+    this.state.value.current.fen = this.state.value.viewing.fen = this.position.fen()
+    this.state.value.current.pgn = this.position.pgn()
+    this.state.value.current.history = this.position.history({ verbose: true })
+    this.state.value.viewing.turnColor = this.state.value.current.turnColor = fromShortColor(
+      this.position.turn()
+    )
+    this.state.value.viewing.legalMoves = legalMoves(this.position)
+    this.state.value.viewing.check = kingCheckSquare(
+      this.position,
+      this.state.value.viewing.turnColor
+    )
+
+    this.state.value.viewing.ply = this.state.value.current.ply = this.getCurrentPly()
   }
 
   toggleOrientation() {
-    this.state.value.orientation = opposite(this.state.value.orientation)
+    this.state.value.viewing.orientation = opposite(this.state.value.viewing.orientation)
   }
 
   setAutoShapes(shapes: DrawShape[]) {
-    this.state.value.autoShapes = shapes
+    this.state.value.viewing.autoShapes = shapes
   }
 
   trimMoves() {
-    const viewingPly = this.state.value.viewingPly
-    const currentPly = this.state.value.currentPly
+    const viewingPly = this.state.value.viewing.ply
+    const currentPly = this.state.value.current.ply
 
     const toTrim = currentPly - viewingPly
 
@@ -134,85 +172,85 @@ export class API {
       this.position.undo()
     }
 
-    this.state.value.viewHistory = { isEnabled: false }
-
-    this.state.value.pgn = this.position.pgn()
-    this.state.value.history = this.position.history({ verbose: true })
+    this.state.value.current.ply = viewingPly
+    this.state.value.current.pgn = this.position.pgn()
+    this.state.value.current.history = this.position.history({ verbose: true })
   }
 
   viewStart() {
-    this.viewGamePly(this.state.value.startPly)
+    this.viewGamePly(this.state.value.start.ply)
   }
 
   viewNext() {
-    this.viewGamePly(this.state.value.viewingPly + 1)
+    this.viewGamePly(this.state.value.viewing.ply + 1)
   }
 
   viewPrevious() {
-    this.viewGamePly(this.state.value.viewingPly - 1)
+    this.viewGamePly(this.state.value.viewing.ply - 1)
   }
 
   viewCurrent() {
-    this.viewGamePly(this.state.value.currentPly)
+    this.viewGamePly(this.state.value.current.ply)
   }
 
   viewGamePly(ply: number) {
     const history = this.position.history({ verbose: true })
 
-    const historyIndex = ply - this.state.value.startPly
+    const historyIndex = ply - this.state.value.start.ply
 
     if (historyIndex < 0 || historyIndex > history.length) return
 
+    const isViewingHistory = this.state.value.viewing.ply !== this.state.value.current.ply
+
     if (historyIndex === history.length) {
       // we returned to our current position
-      if (this.state.value.viewHistory.isEnabled) {
+      if (isViewingHistory) {
         const lastMove = history.at(-1) as Move
 
-        this.state.value.fen = lastMove.after
-        this.state.value.legalMoves = legalMoves(this.position)
-        this.state.value.turnColor = fromShortColor(this.position.turn())
-        this.state.value.check = kingCheckSquare(this.position, this.state.value.turnColor)
+        this.state.value.viewing.fen = lastMove.after
+        this.state.value.viewing.legalMoves = legalMoves(this.position)
+        this.state.value.viewing.turnColor = fromShortColor(this.position.turn())
+        this.state.value.viewing.check = kingCheckSquare(
+          this.position,
+          this.state.value.viewing.turnColor
+        )
 
-        this.state.value.viewHistory = { isEnabled: false }
-        this.state.value.viewingPly = ply
+        this.state.value.viewing.ply = ply
       }
     } else {
-      if (!this.state.value.viewHistory.isEnabled) {
-        this.state.value.viewHistory = {
-          isEnabled: true
-        }
-        this.state.value.viewingPly = ply
+      if (!isViewingHistory) {
+        this.state.value.viewing.ply = ply
 
         this.promotionCanceled()
       } else {
-        this.state.value.viewingPly = ply
+        this.state.value.viewing.ply = ply
       }
 
       const position = new Chess(history[historyIndex].before)
 
-      this.state.value.turnColor = history[historyIndex].color === 'w' ? 'white' : 'black'
-      this.state.value.legalMoves = legalMoves(position)
-      this.state.value.fen = history[historyIndex].before
+      this.state.value.viewing.turnColor = history[historyIndex].color === 'w' ? 'white' : 'black'
+      this.state.value.viewing.legalMoves = legalMoves(position)
+      this.state.value.viewing.fen = history[historyIndex].before
 
-      this.state.value.check = kingCheckSquare(position, this.state.value.turnColor)
+      this.state.value.viewing.check = kingCheckSquare(position, this.state.value.viewing.turnColor)
     }
   }
 
   promotionSelected = (promotion: Promotion) => {
-    if (!this.state.value.promotionDialog.isEnabled) {
+    if (!this.state.value.viewing.promotionDialog.isEnabled) {
       return
     }
 
-    this.state.value.promotionDialog.callback(promotion)
-    this.state.value.promotionDialog = { isEnabled: false }
+    this.state.value.viewing.promotionDialog.callback(promotion)
+    this.state.value.viewing.promotionDialog = { isEnabled: false }
   }
 
   promotionCanceled = () => {
-    if (!this.state.value.promotionDialog.isEnabled) {
+    if (!this.state.value.viewing.promotionDialog.isEnabled) {
       return
     }
-    this.state.value.promotionDialog.cancel()
-    this.state.value.promotionDialog = { isEnabled: false }
+    this.state.value.viewing.promotionDialog.cancel()
+    this.state.value.viewing.promotionDialog = { isEnabled: false }
   }
 
   private getCurrentPly(): number {
@@ -259,22 +297,32 @@ function fullMovesToGamePly(turnColor: Color, moveNumber: number): number {
 export function useChess() {
   const position = new Chess()
 
+  const fen = position.fen()
   const startPly = fullMovesToGamePly(fromShortColor(position.turn()), position.moveNumber())
 
   const state: Ref<ChessState> = ref<ChessState>({
-    autoShapes: [],
-    orientation: 'white',
-    fen: position.fen(),
-    pgn: position.pgn(),
-    history: position.history({ verbose: true }),
-    turnColor: position.turn() === 'w' ? 'white' : 'black',
-    legalMoves: legalMoves(position),
-    check: kingCheckSquare(position, fromShortColor(position.turn())),
-    promotionDialog: { isEnabled: false },
-    viewHistory: { isEnabled: false },
-    startPly: startPly,
-    viewingPly: startPly,
-    currentPly: startPly
+    start: {
+      fen: fen,
+      ply: startPly
+    },
+    current: {
+      fen: fen,
+      pgn: position.pgn(),
+      history: position.history({ verbose: true }),
+      playerColor: undefined,
+      ply: startPly,
+      turnColor: fromShortColor(position.turn())
+    },
+    viewing: {
+      fen: fen,
+      autoShapes: [],
+      orientation: 'white',
+      check: kingCheckSquare(position, fromShortColor(position.turn())),
+      legalMoves: legalMoves(position),
+      ply: startPly,
+      promotionDialog: { isEnabled: false },
+      turnColor: fromShortColor(position.turn())
+    }
   })
   const api = shallowRef<API>(new API(state, position))
 

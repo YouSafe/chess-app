@@ -7,8 +7,8 @@ const props = defineProps<{ state: DeepReadonly<ChessState>; api: API }>()
 const { api, state } = toRefs(props)
 
 const movePairs = computed(() => {
-  const moves = state.value.history
-  const startPly = state.value.startPly
+  const moves = state.value.current.history
+  const startPly = state.value.start.ply
   const pairs: {
     moveNumber: number
     white?: { move: Move; plyAfter: number }
@@ -44,14 +44,14 @@ const movePairs = computed(() => {
         <span
           v-if="move.white"
           class="badge badge-neutral"
-          :class="{ 'badge-primary': move.white.plyAfter === state.viewingPly }"
+          :class="{ 'badge-primary': move.white.plyAfter === state.viewing.ply }"
           @click="api.viewGamePly(move.white.plyAfter)"
           >{{ move.white.move.san }}</span
         >
         <span
           v-if="move.black"
           class="badge badge-neutral"
-          :class="{ 'badge-primary': move.black.plyAfter === state.viewingPly }"
+          :class="{ 'badge-primary': move.black.plyAfter === state.viewing.ply }"
           @click="api.viewGamePly(move.black.plyAfter)"
           >{{ move.black.move.san }}</span
         >

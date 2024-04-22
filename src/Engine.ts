@@ -1,12 +1,14 @@
 import type { Move, Square } from 'chess.js'
 import { ref } from 'vue'
 import type { Promotion } from './useChess'
+import type { Color } from 'chessground/types'
 
 export function useEngine() {
   const bestMove = ref<Move | undefined>(undefined)
   const currMove = ref<Move | undefined>(undefined)
   const evaluation = ref<{ type: 'cp' | 'mate'; value: number } | undefined>(undefined)
   const depth = ref<number | undefined>(undefined)
+  const turnColor = ref<Color | undefined>(undefined)
 
   const wasmSupport =
     typeof WebAssembly === 'object' &&
@@ -92,13 +94,15 @@ export function useEngine() {
     worker.postMessage(`setoption name ${name} value ${value}`)
   }
 
-  function sendPosition(position: string) {
+  function sendPosition(startposition: string, moves: string, color: Color) {
+    turnColor.value = color
+    evaluation.value = undefined
     bestMove.value = undefined
     currMove.value = undefined
 
-    worker.postMessage(`position fen ${position} moves `)
+    worker.postMessage(`position fen ${startposition} moves ${moves}`)
     worker.postMessage('go movetime 2000')
   }
 
-  return { bestMove, currMove, sendPosition, evaluation, depth }
+  return { turnColor, bestMove, currMove, sendPosition, evaluation, depth }
 }

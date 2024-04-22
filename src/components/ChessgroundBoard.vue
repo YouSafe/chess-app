@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Chessground } from 'chessground'
-import { onMounted, ref, type DeepReadonly, toRefs, watch } from 'vue'
+import { onMounted, ref, type DeepReadonly, toRefs, watch, nextTick, computed } from 'vue'
 
 import '../assets/chessground.base.css'
 import '../assets/chessground.coords.css'
@@ -35,6 +35,8 @@ const promotionButtonPosition = (index: number, key: Key, orientation: Color) =>
   return `grid-area: ${gridRowIndex + 1} / ${gridColIndex + 1} /  span 1  / span 1`
 }
 
+const isViewingHistory = computed(() => state.value.viewing.ply !== state.value.current.ply)
+
 onMounted(() => {
   if (board.value === null) {
     throw new Error('Failed to mount board')
@@ -57,41 +59,59 @@ onMounted(() => {
   const chessground = Chessground(board.value, config)
 
   const syncPosition = () => {
-    chessground.set({ fen: state.value.fen })
+    chessground.set({ fen: state.value.viewing.fen })
 
-    chessground.state.turnColor = state.value.turnColor
-    chessground.state.check = state.value.check
+    chessground.state.turnColor = state.value.viewing.turnColor
+    chessground.state.check = state.value.viewing.check
 
-    const historyIndex = state.value.viewingPly - state.value.startPly
+    const historyIndex = state.value.viewing.ply - state.value.start.ply
     const lastMove =
-      state.value.history.length > 0 ? state.value.history[historyIndex - 1] : undefined
+      state.value.current.history.length > 0
+        ? state.value.current.history[historyIndex - 1]
+        : undefined
     chessground.state.lastMove = lastMove ? [lastMove.from, lastMove.to] : undefined
 
     if (!config.movable?.free) {
-      chessground.state.movable.dests = state.value.legalMoves as Dests
-      chessground.state.movable.color = state.value.turnColor
+      chessground.state.movable.dests = state.value.viewing.legalMoves as Dests
+
+      if (isViewingHistory.value && state.value.current.playerColor !== undefined) {
+        chessground.state.movable.color = undefined
+      } else {
+        chessground.state.movable.color =
+          state.value.current.playerColor || state.value.viewing.turnColor
+      }
+    }
+
+    if (config.premovable?.enabled) {
+      chessground.state.premovable.enabled = !isViewingHistory.value
+    }
+
+    if (isViewingHistory.value) {
+      nextTick(chessground.playPremove)
+    } else {
+      chessground.cancelPremove()
     }
   }
 
-  watch(() => state.value.fen, syncPosition, { immediate: true })
+  watch(() => state.value.viewing.fen, syncPosition, { immediate: true })
 
   // the state's FEN is not updated until the promotion is selected
   // therefore the watcher for the FEN is not triggered
   // when we cancel the promotion, we must undo the pawn move
   // whenever the promotion dialog closes, we re-sync the board state
   watch(
-    () => state.value.promotionDialog.isEnabled,
+    () => state.value.viewing.promotionDialog.isEnabled,
     () => {
-      if (!state.value.promotionDialog.isEnabled) {
+      if (!state.value.viewing.promotionDialog.isEnabled) {
         syncPosition()
       }
     }
   )
 
   watch(
-    () => state.value.orientation,
+    () => state.value.viewing.orientation,
     () => {
-      chessground.state.orientation = state.value.orientation
+      chessground.state.orientation = state.value.viewing.orientation
 
       chessground.state.animation.current =
         chessground.state.draggable.current =
@@ -103,8 +123,19 @@ onMounted(() => {
   )
 
   watch(
-    () => state.value.autoShapes,
-    () => chessground.setAutoShapes(state.value.autoShapes as DrawShape[])
+    () => state.value.viewing.autoShapes,
+    () => chessground.setAutoShapes(state.value.viewing.autoShapes as DrawShape[])
+  )
+
+  watch(
+    () => state.value.current.playerColor,
+    () => {
+      if (state.value.current.playerColor) {
+        chessground.state.movable.color = state.value.current.playerColor
+      } else {
+        chessground.state.movable.color = state.value.viewing.turnColor
+      }
+    }
   )
 })
 </script>
@@ -114,21 +145,27 @@ onMounted(() => {
     <div
       ref="board"
       id="board"
-      :style="{ filter: state.viewHistory.isEnabled ? 'saturate(60%)' : 'none' }"
+      :style="{ filter: isViewingHistory ? 'saturate(60%)' : 'none' }"
     ></div>
     <div
       ref="promotion"
       id="promotion-choice"
-      v-show="state.promotionDialog.isEnabled"
+      v-show="state.viewing.promotionDialog.isEnabled"
       @click="api.promotionCanceled"
     >
-      <template v-if="state.promotionDialog.isEnabled">
+      <template v-if="state.viewing.promotionDialog.isEnabled">
         <button
           v-for="(piece, index) in promotions"
           :key="piece.name"
           type="button"
-          :class="[piece.name.toLowerCase(), state.promotionDialog.color]"
-          :style="promotionButtonPosition(index, state.promotionDialog.square, state.orientation)"
+          :class="[piece.name.toLowerCase(), state.viewing.promotionDialog.color]"
+          :style="
+            promotionButtonPosition(
+              index,
+              state.viewing.promotionDialog.square,
+              state.viewing.orientation
+            )
+          "
           :aria-label="piece.name"
           @click="api.promotionSelected(piece.value)"
           @touchstart.passive="api.promotionSelected(piece.value)"
