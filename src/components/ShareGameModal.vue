@@ -2,6 +2,8 @@
 import { useClipboard } from '@vueuse/core'
 import { ref, toRefs } from 'vue'
 
+import { ClipboardIcon } from '@heroicons/vue/24/outline'
+
 const props = defineProps<{
   pgn: string
   fen: string
@@ -46,36 +48,43 @@ const {
   >
     <div class="modal-box">
       <h3 class="font-bold text-lg">Share game</h3>
-      <label class="form-control">
-        <div class="label">
-          <span class="label-text">FEN</span>
-          <button @click="pgnCopy(fen)" v-if="pgnIsSupported">
-            <span v-if="!pgnCopied" class="text-xs">Copy</span
+      <div class="flex flex-col">
+        <div class="flex justify-between">
+          <label for="fen" class="label">
+            <span class="label-text">FEN</span>
+          </label>
+          <button type="button" @click="fenCopy(fen)" v-if="fenIsSupported">
+            <span v-if="!fenCopied" class="text-xs">Copy</span
             ><span class="text-xs" v-else>Copied!</span>
+            <ClipboardIcon class="inline size-4" />
           </button>
         </div>
         <input
-          readonly
+          id="fen"
           type="text"
           class="input px-3 text-sm leading-snug input-bordered"
           :value="fen"
+          readonly
         />
-
-        <div class="label">
-          <span class="label-text">PGN</span>
-          <button @click="fenCopy(pgn)" v-if="fenIsSupported">
-            <span v-if="!fenCopied" class="text-xs">Copy</span
+        <div class="flex justify-between">
+          <label for="pgn" class="label">
+            <span class="label-text">PGN</span>
+          </label>
+          <button type="button" @click="pgnCopy(pgn)" v-if="pgnIsSupported">
+            <span v-if="!pgnCopied" class="text-xs">Copy</span
             ><span class="text-xs" v-else>Copied!</span>
+            <ClipboardIcon class="inline size-4" />
           </button>
         </div>
         <textarea
-          readonly
+          id="pgn"
           type="text"
           class="textarea px-3 text-sm leading-snug textarea-bordered"
           rows="10"
           :value="pgn"
+          readonly
         ></textarea>
-      </label>
+      </div>
 
       <div class="modal-action">
         <form method="dialog" class="flex gap-2">
