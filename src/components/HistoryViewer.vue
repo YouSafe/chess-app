@@ -76,7 +76,7 @@ watch(
     <div
       v-for="(move, index) of movePairs"
       :key="move.moveNumber"
-      class="flex gap-1 items-baseline"
+      class="select-none flex gap-1 items-baseline"
     >
       <span>{{ move.moveNumber }}.</span>
       <span v-if="index === 0 && move.white === undefined">...</span>
