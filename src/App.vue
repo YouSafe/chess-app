@@ -117,11 +117,13 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
   <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)" />
   <ShareGameModal ref="shareGameModal" :pgn="state.current.pgn" :fen="state.viewing.fen" />
 
-  <div class="flex flex-wrap justify-center">
-    <ChessgroundBoard :api="api" :state="state"></ChessgroundBoard>
-    <aside
-      class="min-w-[5em] max-w-[30em] min-h-40 p-1 flex-grow flex-shrink bg-base-200 flex flex-col"
-    >
+  <div class="flex min-h-svh max-w-svh justify-center portrait:flex-col flex-wrap">
+    <ChessgroundBoard
+      class="flex-shrink-0 flex-grow-0"
+      :api="api"
+      :state="state"
+    ></ChessgroundBoard>
+    <aside class="min-w-[20em] max-w-[30em] p-2 flex flex-1 bg-base-200 flex-col">
       <div>
         <div class="form-control w-fit inline-flex">
           <label class="label cursor-pointer gap-2">
@@ -146,7 +148,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
 
-      <HistoryViewer :api="api" :state="state" />
+      <HistoryViewer class="flex-grow basis-0 overflow-auto" :api="api" :state="state" />
       <HistoryNavigator :api="api" :state="state" />
     </aside>
   </div>

@@ -138,7 +138,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main-board">
+  <div class="main-board w-fit h-fit">
     <div
       ref="board"
       id="board"
