@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { API, ChessState } from '@/useChess'
 import type { Move } from 'chess.js'
-import { computed, toRefs, type DeepReadonly } from 'vue'
+import { computed, ref, toRefs, watch, type DeepReadonly } from 'vue'
 
 const props = defineProps<{ state: DeepReadonly<ChessState>; api: API }>()
 const { api, state } = toRefs(props)
@@ -33,29 +33,67 @@ const movePairs = computed(() => {
   }
   return pairs
 })
+
+const moves = ref<HTMLDivElement>()
+
+watch(
+  () => state.value.viewing.ply,
+  () => {
+    if (!moves.value) {
+      return
+    }
+
+    const moveIndex = Math.floor((state.value.viewing.ply - 1 + state.value.start.ply) / 2)
+
+    if (moveIndex === -1) {
+      moves.value.scroll({ behavior: 'smooth', top: 0 })
+    }
+
+    const moveElement = moves.value?.children[moveIndex]
+    if (!moveElement) {
+      return
+    }
+    const elementBounding = moveElement.getBoundingClientRect()
+    const parentBounding = moves.value.getBoundingClientRect()
+
+    if (
+      elementBounding.top <= parentBounding.top &&
+      (elementBounding.bottom <= parentBounding.top || elementBounding.bottom >= parentBounding.top)
+    ) {
+      moveElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
+    } else if (
+      elementBounding.bottom >= parentBounding.bottom &&
+      (elementBounding.top >= parentBounding.bottom || elementBounding.top <= parentBounding.bottom)
+    ) {
+      moveElement.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
+    }
+  }
+)
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-2 items-baseline">
-    <template v-for="(move, index) of movePairs" :key="index">
-      <div class="flex gap-1 items-baseline">
-        <span>{{ move.moveNumber }}.</span>
-        <span v-if="index === 0 && move.white === undefined">...</span>
-        <span
-          v-if="move.white"
-          class="badge badge-neutral"
-          :class="{ 'badge-primary': move.white.plyAfter === state.viewing.ply }"
-          @click="api.viewGamePly(move.white.plyAfter)"
-          >{{ move.white.move.san }}</span
-        >
-        <span
-          v-if="move.black"
-          class="badge badge-neutral"
-          :class="{ 'badge-primary': move.black.plyAfter === state.viewing.ply }"
-          @click="api.viewGamePly(move.black.plyAfter)"
-          >{{ move.black.move.san }}</span
-        >
-      </div>
-    </template>
+  <div ref="moves" class="flex flex-wrap gap-2 items-baseline focus:bg-orange-500">
+    <div
+      v-for="(move, index) of movePairs"
+      :key="move.moveNumber"
+      class="flex gap-1 items-baseline"
+    >
+      <span>{{ move.moveNumber }}.</span>
+      <span v-if="index === 0 && move.white === undefined">...</span>
+      <span
+        v-if="move.white"
+        class="badge badge-neutral"
+        :class="{ 'badge-primary': move.white.plyAfter === state.viewing.ply }"
+        @click="api.viewGamePly(move.white.plyAfter)"
+        >{{ move.white.move.san }}</span
+      >
+      <span
+        v-if="move.black"
+        class="badge badge-neutral"
+        :class="{ 'badge-primary': move.black.plyAfter === state.viewing.ply }"
+        @click="api.viewGamePly(move.black.plyAfter)"
+        >{{ move.black.move.san }}</span
+      >
+    </div>
   </div>
 </template>

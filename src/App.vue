@@ -91,8 +91,8 @@ const evaluationDisplay = computed(() => {
 })
 
 const shortcuts = [
-  { key: 'ArrowUp', func: () => api.value.viewCurrent() },
-  { key: 'ArrowDown', func: () => api.value.viewStart() },
+  { key: 'ArrowUp', func: () => api.value.viewStart() },
+  { key: 'ArrowDown', func: () => api.value.viewCurrent() },
   { key: 'ArrowRight', func: () => api.value.viewNext() },
   { key: 'ArrowLeft', func: () => api.value.viewPrevious() }
 ]
@@ -123,8 +123,8 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
       :api="api"
       :state="state"
     ></ChessgroundBoard>
-    <aside class="min-w-[20em] max-w-[30em] p-2 flex flex-1 bg-base-200 flex-col">
-      <div>
+    <aside class="min-w-[20em] max-w-[30em] p-2 flex flex-1 bg-base-200 flex-col gap-2">
+      <div class="h-10">
         <div class="form-control w-fit inline-flex">
           <label class="label cursor-pointer gap-2">
             <input type="checkbox" class="toggle" checked />
@@ -149,7 +149,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
       </div>
 
       <HistoryViewer
-        class="flex-grow min-h-28 h-full my-2 basis-0 overflow-auto"
+        class="flex-grow min-h-28 h-full basis-0 overflow-auto"
         :api="api"
         :state="state"
       />
