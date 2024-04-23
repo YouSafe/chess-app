@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useClipboard } from '@vueuse/core'
+import { ref, toRefs } from 'vue'
 
 const props = defineProps<{
   pgn: string
   fen: string
 }>()
+
+const { pgn, fen } = toRefs(props)
 
 const dialog = ref<HTMLDialogElement>()
 
@@ -18,6 +21,17 @@ const showModal = () => {
 defineExpose({
   show: showModal
 })
+
+const {
+  copy: pgnCopy,
+  copied: pgnCopied,
+  isSupported: pgnIsSupported
+} = useClipboard({ source: pgn })
+const {
+  copy: fenCopy,
+  copied: fenCopied,
+  isSupported: fenIsSupported
+} = useClipboard({ source: fen })
 </script>
 
 <template>
@@ -35,23 +49,31 @@ defineExpose({
       <label class="form-control">
         <div class="label">
           <span class="label-text">FEN</span>
+          <button @click="pgnCopy()" v-if="pgnIsSupported">
+            <span v-if="!pgnCopied" class="text-xs">Copy</span
+            ><span class="text-xs" v-else>Copied!</span>
+          </button>
         </div>
         <input
           readonly
           type="text"
           class="input px-3 text-sm leading-snug input-bordered"
-          :value="props.fen"
+          :value="fen"
         />
 
         <div class="label">
           <span class="label-text">PGN</span>
+          <button @click="fenCopy()" v-if="fenIsSupported">
+            <span v-if="!fenCopied" class="text-xs">Copy</span
+            ><span class="text-xs" v-else>Copied!</span>
+          </button>
         </div>
         <textarea
           readonly
           type="text"
           class="textarea px-3 text-sm leading-snug textarea-bordered"
           rows="10"
-          :value="props.pgn"
+          :value="pgn"
         ></textarea>
       </label>
 
