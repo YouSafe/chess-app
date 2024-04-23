@@ -122,7 +122,10 @@ export class API {
     const promotionFile = piece.color === 'w' ? '8' : '1'
 
     let promotion: Promotion | undefined = undefined
-    if (piece?.type === 'p' && move.to[1] === promotionFile) {
+
+    if (move.promotion) {
+      promotion = move.promotion as Promotion
+    } else if (piece?.type === 'p' && move.to[1] === promotionFile) {
       try {
         promotion = await new Promise((resolve, reject) => {
           this.state.value.viewing.promotionDialog = {
