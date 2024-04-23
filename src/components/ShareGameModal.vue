@@ -49,7 +49,7 @@ const {
       <label class="form-control">
         <div class="label">
           <span class="label-text">FEN</span>
-          <button @click="pgnCopy()" v-if="pgnIsSupported">
+          <button @click="pgnCopy(fen)" v-if="pgnIsSupported">
             <span v-if="!pgnCopied" class="text-xs">Copy</span
             ><span class="text-xs" v-else>Copied!</span>
           </button>
@@ -63,7 +63,7 @@ const {
 
         <div class="label">
           <span class="label-text">PGN</span>
-          <button @click="fenCopy()" v-if="fenIsSupported">
+          <button @click="fenCopy(pgn)" v-if="fenIsSupported">
             <span v-if="!fenCopied" class="text-xs">Copy</span
             ><span class="text-xs" v-else>Copied!</span>
           </button>
