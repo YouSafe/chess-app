@@ -148,7 +148,11 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
 
-      <HistoryViewer class="flex-grow basis-0 overflow-auto" :api="api" :state="state" />
+      <HistoryViewer
+        class="flex-grow min-h-28 h-full my-2 basis-0 overflow-auto"
+        :api="api"
+        :state="state"
+      />
       <HistoryNavigator :api="api" :state="state" />
     </aside>
   </div>

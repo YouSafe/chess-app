@@ -36,7 +36,7 @@ const movePairs = computed(() => {
 </script>
 
 <template>
-  <div class="py-5 flex h-full flex-wrap gap-2 items-baseline">
+  <div class="flex flex-wrap gap-2 items-baseline">
     <template v-for="(move, index) of movePairs" :key="index">
       <div class="flex gap-1 items-baseline">
         <span>{{ move.moveNumber }}.</span>
