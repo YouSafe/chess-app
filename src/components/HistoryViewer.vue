@@ -72,7 +72,7 @@ watch(
 </script>
 
 <template>
-  <div ref="moves" class="flex flex-wrap gap-2 items-baseline focus:bg-orange-500">
+  <div ref="moves" class="flex flex-wrap content-start gap-2">
     <div
       v-for="(move, index) of movePairs"
       :key="move.moveNumber"
