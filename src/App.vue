@@ -85,6 +85,9 @@ const evaluationDisplay = computed(() => {
   const absValue = Math.abs(value)
 
   if (type === 'mate') {
+    if (absValue === 0) {
+      return '-'
+    }
     return `${sign}M${Math.abs(absValue)}`
   } else {
     return `${sign}${(absValue / 100).toFixed(1)}`
