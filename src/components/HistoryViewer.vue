@@ -56,23 +56,25 @@ watch(
     const elementBounding = moveElement.getBoundingClientRect()
     const parentBounding = moves.value.getBoundingClientRect()
 
-    if (
-      (elementBounding.top <= parentBounding.top &&
-        (elementBounding.bottom <= parentBounding.top ||
-          elementBounding.bottom >= parentBounding.top)) ||
-      (elementBounding.left <= parentBounding.left &&
-        (elementBounding.right <= parentBounding.left ||
-          elementBounding.right >= parentBounding.left))
-    ) {
+    const topEdgeNotInBound =
+      elementBounding.top < parentBounding.top &&
+      (elementBounding.bottom <= parentBounding.top || elementBounding.bottom >= parentBounding.top)
+
+    const leftEdgeNotInBound =
+      elementBounding.left < parentBounding.left &&
+      (elementBounding.right <= parentBounding.left || elementBounding.right >= parentBounding.left)
+
+    const bottomEdgeNotInBound =
+      elementBounding.bottom > parentBounding.bottom &&
+      (elementBounding.top >= parentBounding.bottom || elementBounding.top <= parentBounding.bottom)
+
+    const rightEdgeNotInBound =
+      elementBounding.right > parentBounding.right &&
+      (elementBounding.left >= parentBounding.right || elementBounding.left <= parentBounding.right)
+
+    if (topEdgeNotInBound || leftEdgeNotInBound) {
       moveElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
-    } else if (
-      (elementBounding.bottom >= parentBounding.bottom &&
-        (elementBounding.top >= parentBounding.bottom ||
-          elementBounding.top <= parentBounding.bottom)) ||
-      (elementBounding.right >= parentBounding.right &&
-        (elementBounding.left >= parentBounding.right ||
-          elementBounding.left <= parentBounding.right))
-    ) {
+    } else if (bottomEdgeNotInBound || rightEdgeNotInBound) {
       moveElement.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
     }
   }
