@@ -79,6 +79,8 @@ export class API {
     const fen = this.position.fen()
     const startFen = history.at(0)?.before || fen
 
+    const initialPosition = new Chess(startFen)
+
     this.state.value = {
       start: {
         fen: startFen,
@@ -97,11 +99,11 @@ export class API {
         fen: startFen,
         autoShapes: [],
         orientation: this.state.value.viewing.orientation,
-        check: kingCheckSquare(this.position, fromShortColor(this.position.turn())),
-        legalMoves: legalMoves(this.position),
+        check: kingCheckSquare(initialPosition, fromShortColor(initialPosition.turn())),
+        legalMoves: legalMoves(initialPosition),
         ply: startPly,
         promotionDialog: { isEnabled: false },
-        turnColor: fromShortColor(this.position.turn())
+        turnColor: fromShortColor(initialPosition.turn())
       }
     }
   }
