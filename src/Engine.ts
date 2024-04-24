@@ -3,11 +3,14 @@ import { ref } from 'vue'
 import type { Promotion } from './useChess'
 import type { Color } from 'chessground/types'
 
+export interface Eval {
+  type: 'cp' | 'mate'
+  value: number
+}
+
 export function useEngine() {
   const bestMove = ref<Move | undefined>(undefined)
-  const currMove = ref<Move | undefined>(undefined)
-  const evaluation = ref<{ type: 'cp' | 'mate'; value: number } | undefined>(undefined)
-  const depth = ref<number | undefined>(undefined)
+  const currMove = ref<{ move: Move; eval?: Eval; depth?: number } | undefined>(undefined)
   const turnColor = ref<Color | undefined>(undefined)
 
   const wasmSupport =
@@ -83,10 +86,12 @@ export function useEngine() {
 
       const currmove = parsed?.pv?.at(0)
       if (currmove !== undefined) {
-        currMove.value = parseUCIMove(currmove)
+        currMove.value = {
+          move: parseUCIMove(currmove),
+          eval: parsed.score,
+          depth: parsed.depth
+        }
       }
-      evaluation.value = parsed.score
-      depth.value = parsed.depth
     }
   }
 
@@ -96,7 +101,6 @@ export function useEngine() {
 
   function sendPosition(startposition: string, moves: string, color: Color) {
     turnColor.value = color
-    evaluation.value = undefined
     bestMove.value = undefined
     currMove.value = undefined
 
@@ -104,5 +108,5 @@ export function useEngine() {
     worker.postMessage('go movetime 2000')
   }
 
-  return { turnColor, bestMove, currMove, sendPosition, evaluation, depth }
+  return { turnColor, bestMove, currMove, sendPosition }
 }

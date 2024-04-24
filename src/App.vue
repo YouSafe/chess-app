@@ -8,7 +8,7 @@ import { useEngine } from '@/Engine'
 
 import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, watchPausable } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import GameResultModal from '@/components/GameResultModal.vue'
 
@@ -16,38 +16,39 @@ const playAgainstComputer = ref(false)
 
 const { state, api } = useChess()
 
-const {
-  turnColor: engineTurnColor,
-  bestMove,
-  currMove,
-  sendPosition,
-  evaluation,
-  depth
-} = useEngine()
+const { turnColor: engineTurnColor, bestMove, currMove, sendPosition } = useEngine()
 
-watch(
-  () => state.value.current.fen,
+const viewerFenWatcher = watchPausable(
+  () => state.value.viewing.fen,
   () => {
-    if (state.value.current.playerColor !== undefined) {
-      const moves = state.value.current.history.map((move) => move.lan).join(' ')
+    const historyIndex = state.value.viewing.ply - state.value.start.ply
+    const moves = state.value.current.history
+      .slice(0, historyIndex)
+      .map((move) => move.lan)
+      .join(' ')
 
-      sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
-    }
-  },
-  { immediate: true }
+    sendPosition(state.value.start.fen, moves, state.value.viewing.turnColor)
+  }
+)
+
+const currentFenWatcher = watchPausable(
+  () => state.value.viewing.fen,
+  () => {
+    const moves = state.value.current.history.map((move) => move.lan).join(' ')
+
+    sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
+  }
 )
 
 watch(
-  () => state.value.viewing.fen,
+  playAgainstComputer,
   () => {
-    if (state.value.current.playerColor === undefined) {
-      const historyIndex = state.value.viewing.ply - state.value.start.ply
-      const moves = state.value.current.history
-        .slice(0, historyIndex)
-        .map((move) => move.lan)
-        .join(' ')
-
-      sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
+    if (playAgainstComputer.value) {
+      viewerFenWatcher.pause()
+      currentFenWatcher.resume()
+    } else {
+      currentFenWatcher.pause()
+      viewerFenWatcher.resume()
     }
   },
   { immediate: true }
@@ -56,17 +57,17 @@ watch(
 watchEffect(() => {
   if (
     playAgainstComputer.value &&
-    state.value.current.turnColor !== state.value.viewing.orientation
+    state.value.current.playerColor &&
+    state.value.current.turnColor !== state.value.viewing.orientation &&
+    bestMove.value
   ) {
-    if (bestMove.value) {
-      api.value.move(bestMove.value)
-    }
+    api.value.move(bestMove.value)
   }
 })
 
 watchEffect(() => {
   if (currMove.value && !playAgainstComputer.value) {
-    const move = currMove.value
+    const move = currMove.value.move
     api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
   } else {
     api.value.setAutoShapes([])
@@ -81,11 +82,13 @@ watchEffect(() => {
 })
 
 const evaluationDisplay = computed(() => {
-  if (!evaluation.value) return null
+  if (!currMove.value) return null
+  const evaluation = currMove.value.eval
+  if (!evaluation) return false
   const modifier = engineTurnColor.value === 'black' ? -1 : 1
   const { type, value } = {
-    type: evaluation.value.type,
-    value: evaluation.value.value * modifier
+    type: evaluation.type,
+    value: evaluation.value * modifier
   }
 
   const sign = value > 0 ? '+' : '-'
@@ -126,7 +129,6 @@ const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
 watch(
   () => state.value.current.gameResult,
   () => {
-    console.log(state.value.current.gameResult)
     if (state.value.current.gameResult && state.value.current.playerColor) {
       gameResultModal.value?.show()
     }
@@ -155,7 +157,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
           <label class="label cursor-pointer gap-2">
             <input type="checkbox" class="toggle" checked />
             <span class="font-bold text-2xl">{{ evaluationDisplay }}</span>
-            <span>depth={{ depth }}</span>
+            <span>depth={{ currMove?.depth }}</span>
           </label>
         </div>
         <div class="form-control w-fit inline-flex">

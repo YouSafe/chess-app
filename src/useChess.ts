@@ -144,7 +144,6 @@ export class API {
     }
 
     this.position.move({ ...move, promotion })
-    console.log(this.position.isGameOver())
 
     const gameResult = determineGameResult(this.position)
     if (gameResult) {
