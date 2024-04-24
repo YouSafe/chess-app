@@ -73,6 +73,13 @@ watchEffect(() => {
   }
 })
 
+watchEffect(() => {
+  if (bestMove.value && !playAgainstComputer.value) {
+    const move = bestMove.value
+    api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
+  }
+})
+
 const evaluationDisplay = computed(() => {
   if (!evaluation.value) return null
   const modifier = engineTurnColor.value === 'black' ? -1 : 1
