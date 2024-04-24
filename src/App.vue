@@ -104,6 +104,7 @@ for (const shortcut of shortcuts) {
 
 watch(playAgainstComputer, () => {
   if (playAgainstComputer.value) {
+    api.value.viewCurrent()
     api.value.setPlayerColor(state.value.viewing.orientation)
   } else {
     api.value.setPlayerColor(undefined)
