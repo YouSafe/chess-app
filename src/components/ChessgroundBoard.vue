@@ -143,7 +143,10 @@ onMounted(() => {
       ref="board"
       id="board"
       :style="{
-        filter: state.viewing.ply !== state.current.ply ? 'saturate(60%)' : 'none'
+        filter:
+          state.viewing.ply !== state.current.ply && state.current.playerColor
+            ? 'saturate(60%)'
+            : 'none'
       }"
     ></div>
     <div
