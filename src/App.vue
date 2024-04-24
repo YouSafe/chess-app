@@ -10,6 +10,7 @@ import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
+import GameResultModal from '@/components/GameResultModal.vue'
 
 const playAgainstComputer = ref(false)
 
@@ -109,6 +110,19 @@ watch(playAgainstComputer, () => {
   }
 })
 
+const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
+
+watch(
+  () => state.value.current.gameResult,
+  () => {
+    console.log(state.value.current.gameResult)
+    if (state.value.current.gameResult && state.value.current.playerColor) {
+      gameResultModal.value?.show()
+    }
+  },
+  { immediate: true }
+)
+
 const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
 const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 </script>
@@ -116,6 +130,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 <template>
   <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)" />
   <ShareGameModal ref="shareGameModal" :pgn="state.current.pgn" :fen="state.viewing.fen" />
+  <GameResultModal ref="gameResultModal" :game-result="state.current.gameResult"></GameResultModal>
 
   <div class="flex min-h-svh max-w-svh justify-center portrait:flex-col flex-wrap">
     <ChessgroundBoard

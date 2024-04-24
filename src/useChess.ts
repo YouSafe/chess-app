@@ -39,6 +39,7 @@ export interface ChessState {
     history: Move[]
     turnColor: Color
     playerColor: Color | undefined
+    gameResult?: GameResult
   }
   viewing: {
     promotionDialog: PromotionDialogState
@@ -89,7 +90,8 @@ export class API {
         history: history,
         playerColor: this.state.value.current.playerColor,
         ply: startPly + history.length,
-        turnColor: fromShortColor(this.position.turn())
+        turnColor: fromShortColor(this.position.turn()),
+        gameResult: determineGameResult(this.position)
       },
       viewing: {
         fen: startFen,
@@ -142,6 +144,13 @@ export class API {
     }
 
     this.position.move({ ...move, promotion })
+    console.log(this.position.isGameOver())
+
+    const gameResult = determineGameResult(this.position)
+    if (gameResult) {
+      this.state.value.current.gameResult = gameResult
+    }
+
     this.state.value.current.fen = this.state.value.viewing.fen = this.position.fen()
     this.state.value.current.pgn = this.position.pgn()
     this.state.value.current.history = this.position.history({ verbose: true })
@@ -297,6 +306,52 @@ function fullMovesToGamePly(turnColor: Color, moveNumber: number): number {
   return Math.max(2 * (moveNumber - 1), 0) + Number(turnColor === 'black')
 }
 
+function determineGameResult(position: Chess): GameResult | undefined {
+  if (position.isGameOver()) {
+    if (position.isCheckmate()) {
+      const turnColor = position.turn()
+
+      return {
+        result: turnColor === 'w' ? 'blackWon' : 'whiteWon',
+        reason: 'checkmate'
+      }
+    } else if (position.isDraw()) {
+      if (position.isThreefoldRepetition()) {
+        return {
+          result: 'draw',
+          reason: 'threefold repetition'
+        }
+      } else if (position.isInsufficientMaterial()) {
+        return {
+          result: 'draw',
+          reason: 'insufficient material'
+        }
+      } else if (position.isStalemate()) {
+        return {
+          result: 'draw',
+          reason: 'stalemate'
+        }
+      }
+    }
+  }
+  return undefined
+}
+
+export type GameResult =
+  | {
+      result: 'whiteWon' | 'blackWon'
+      reason: 'resignation' | 'checkmate' | 'time'
+    }
+  | {
+      result: 'draw'
+      reason:
+        | 'agreement'
+        | 'stalemate'
+        | 'insufficient material'
+        | 'threefold repetition'
+        | '50-move rule'
+    }
+
 export function useChess() {
   const position = new Chess()
 
@@ -314,7 +369,8 @@ export function useChess() {
       history: position.history({ verbose: true }),
       playerColor: undefined,
       ply: startPly,
-      turnColor: fromShortColor(position.turn())
+      turnColor: fromShortColor(position.turn()),
+      gameResult: undefined
     },
     viewing: {
       fen: fen,
