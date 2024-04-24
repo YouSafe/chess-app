@@ -90,14 +90,14 @@ watch(
       <span v-if="index === 0 && move.white === undefined">...</span>
       <span
         v-if="move.white"
-        class="badge badge-neutral"
+        class="badge badge-neutral rounded-[0.2rem] py-[0.1rem] px-[0.2rem] cursor-pointer"
         :class="{ 'badge-primary': move.white.plyAfter === state.viewing.ply }"
         @click="api.viewGamePly(move.white.plyAfter)"
         >{{ move.white.move.san }}</span
       >
       <span
         v-if="move.black"
-        class="badge badge-neutral"
+        class="badge badge-neutral rounded-[0.2rem] py-[0.1rem] px-[0.2rem] cursor-pointer"
         :class="{ 'badge-primary': move.black.plyAfter === state.viewing.ply }"
         @click="api.viewGamePly(move.black.plyAfter)"
         >{{ move.black.move.san }}</span
