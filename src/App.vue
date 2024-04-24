@@ -168,7 +168,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
       </div>
 
       <HistoryViewer
-        class="flex-grow min-h-28 h-full basis-0 overflow-auto"
+        class="flex-grow flex-wrap min-h-28 h-full basis-0 overflow-auto"
         :api="api"
         :state="state"
       />

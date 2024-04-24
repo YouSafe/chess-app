@@ -57,13 +57,21 @@ watch(
     const parentBounding = moves.value.getBoundingClientRect()
 
     if (
-      elementBounding.top <= parentBounding.top &&
-      (elementBounding.bottom <= parentBounding.top || elementBounding.bottom >= parentBounding.top)
+      (elementBounding.top <= parentBounding.top &&
+        (elementBounding.bottom <= parentBounding.top ||
+          elementBounding.bottom >= parentBounding.top)) ||
+      (elementBounding.left <= parentBounding.left &&
+        (elementBounding.right <= parentBounding.left ||
+          elementBounding.right >= parentBounding.left))
     ) {
       moveElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
     } else if (
-      elementBounding.bottom >= parentBounding.bottom &&
-      (elementBounding.top >= parentBounding.bottom || elementBounding.top <= parentBounding.bottom)
+      (elementBounding.bottom >= parentBounding.bottom &&
+        (elementBounding.top >= parentBounding.bottom ||
+          elementBounding.top <= parentBounding.bottom)) ||
+      (elementBounding.right >= parentBounding.right &&
+        (elementBounding.left >= parentBounding.right ||
+          elementBounding.left <= parentBounding.right))
     ) {
       moveElement.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
     }
@@ -72,7 +80,7 @@ watch(
 </script>
 
 <template>
-  <div ref="moves" class="flex flex-wrap content-start gap-2">
+  <div ref="moves" class="flex content-start gap-2">
     <div
       v-for="(move, index) of movePairs"
       :key="move.moveNumber"
