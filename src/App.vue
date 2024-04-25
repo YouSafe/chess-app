@@ -8,7 +8,7 @@ import { useEngine } from '@/Engine'
 
 import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
-import { onKeyStroke, watchPausable } from '@vueuse/core'
+import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import GameResultModal from '@/components/GameResultModal.vue'
 import type { Color } from 'chessground/types'
@@ -62,40 +62,32 @@ watch(
   { immediate: true }
 )
 
-const viewerFenWatcher = watchPausable(
-  () => state.value.viewing.fen,
+const engineInput = computed(() => {
+  if (playAgainstComputer.value) {
+    return {
+      fen: state.value.current.fen,
+      historyIndex: state.value.current.ply - state.value.start.ply,
+      turnColor: state.value.current.turnColor
+    }
+  } else {
+    return {
+      fen: state.value.viewing.fen,
+      historyIndex: state.value.viewing.ply - state.value.start.ply,
+      turnColor: state.value.viewing.turnColor
+    }
+  }
+})
+
+watch(
+  () => engineInput.value.fen,
   () => {
-    const historyIndex = state.value.viewing.ply - state.value.start.ply
     const moves = state.value.current.history
-      .slice(0, historyIndex)
+      .slice(0, engineInput.value.historyIndex)
       .map((move) => move.lan)
       .join(' ')
 
-    sendPosition(state.value.start.fen, moves, state.value.viewing.turnColor)
+    sendPosition(engineInput.value.fen, moves, engineInput.value.turnColor)
   }
-)
-
-const currentFenWatcher = watchPausable(
-  () => state.value.viewing.fen,
-  () => {
-    const moves = state.value.current.history.map((move) => move.lan).join(' ')
-
-    sendPosition(state.value.start.fen, moves, state.value.current.turnColor)
-  }
-)
-
-watch(
-  playAgainstComputer,
-  () => {
-    if (playAgainstComputer.value) {
-      viewerFenWatcher.pause()
-      currentFenWatcher.resume()
-    } else {
-      currentFenWatcher.pause()
-      viewerFenWatcher.resume()
-    }
-  },
-  { immediate: true }
 )
 
 watchEffect(() => {
