@@ -17,13 +17,16 @@ export function useEngine() {
     typeof WebAssembly === 'object' &&
     WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
 
-  const worker = new Worker(wasmSupport ? 'stockfish/stockfish.wasm.js' : 'stockfish/stockfish.js')
+  let worker: Worker | null = null
 
-  worker.addEventListener('message', (data) => handleEngineStdout(data))
-  worker.addEventListener('error', (err) => console.error(err))
-  worker.addEventListener('messageerror', (err) => console.error(err))
+  function start() {
+    worker = new Worker(wasmSupport ? 'stockfish/stockfish.wasm.js' : 'stockfish/stockfish.js')
+    worker.addEventListener('message', (data) => handleEngineStdout(data))
+    worker.addEventListener('error', (err) => console.error(err))
+    worker.addEventListener('messageerror', (err) => console.error(err))
 
-  worker.postMessage('uci')
+    worker.postMessage('uci')
+  }
 
   function parseUCIMove(move: string): Move {
     const from = move.slice(0, 2) as Square
@@ -39,8 +42,8 @@ export function useEngine() {
       setOption('UCI_AnalyseMode', 'true')
       setOption('Analysis Contempt', 'Off')
 
-      worker.postMessage('ucinewgame')
-      worker.postMessage('isready')
+      worker!.postMessage('ucinewgame')
+      worker!.postMessage('isready')
       return
     }
 
@@ -96,10 +99,19 @@ export function useEngine() {
   }
 
   function setOption(name: string, value: string) {
+    if (!worker) {
+      console.log('trying to send command to non-running worker')
+      return
+    }
     worker.postMessage(`setoption name ${name} value ${value}`)
   }
 
   function sendPosition(startposition: string, moves: string, color: Color) {
+    if (!worker) {
+      console.log('trying to send command to non-running worker')
+      return
+    }
+
     turnColor.value = color
     bestMove.value = undefined
     currMove.value = undefined
@@ -108,5 +120,17 @@ export function useEngine() {
     worker.postMessage('go movetime 2000')
   }
 
-  return { turnColor, bestMove, currMove, sendPosition }
+  function terminate() {
+    if (!worker) {
+      console.warn('trying to terminate non-running worker')
+      return
+    }
+    worker.terminate()
+
+    turnColor.value = undefined
+    bestMove.value = undefined
+    currMove.value = undefined
+  }
+
+  return { turnColor, bestMove, currMove, sendPosition, start, terminate }
 }

@@ -11,12 +11,56 @@ import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke, watchPausable } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import GameResultModal from '@/components/GameResultModal.vue'
+import type { Color } from 'chessground/types'
 
 const playAgainstComputer = ref(false)
+const toggleEngine = ref(true)
+const engineShouldRun = computed(() => toggleEngine.value || playAgainstComputer.value)
+
+const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
+const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
+const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 
 const { state, api } = useChess()
 
-const { turnColor: engineTurnColor, bestMove, currMove, sendPosition } = useEngine()
+const {
+  turnColor: engineTurnColor,
+  bestMove,
+  currMove,
+  sendPosition,
+  start,
+  terminate
+} = useEngine()
+
+watch(
+  engineShouldRun,
+  () => {
+    if (engineShouldRun.value) {
+      start()
+
+      let fen: string, historyIndex: number, turnColor: Color
+      if (playAgainstComputer.value) {
+        fen = state.value.current.fen
+        historyIndex = state.value.current.ply - state.value.start.ply
+        turnColor = state.value.current.turnColor
+      } else {
+        fen = state.value.viewing.fen
+        historyIndex = state.value.viewing.ply - state.value.start.ply
+        turnColor = state.value.viewing.turnColor
+      }
+
+      const moves = state.value.current.history
+        .slice(0, historyIndex)
+        .map((move) => move.lan)
+        .join(' ')
+
+      sendPosition(fen, moves, turnColor)
+    } else {
+      terminate()
+    }
+  },
+  { immediate: true }
+)
 
 const viewerFenWatcher = watchPausable(
   () => state.value.viewing.fen,
@@ -124,8 +168,6 @@ watch(playAgainstComputer, () => {
   }
 })
 
-const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
-
 watch(
   () => state.value.current.gameResult,
   () => {
@@ -135,9 +177,6 @@ watch(
   },
   { immediate: true }
 )
-
-const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
-const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 </script>
 
 <template>
@@ -155,7 +194,7 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
       <div class="h-10">
         <div class="form-control w-fit inline-flex">
           <label class="label cursor-pointer gap-2">
-            <input type="checkbox" class="toggle" checked />
+            <input type="checkbox" class="toggle" v-model="toggleEngine" checked />
             <span class="font-bold text-2xl">{{ evaluationDisplay }}</span>
             <span>depth={{ currMove?.depth }}</span>
           </label>
