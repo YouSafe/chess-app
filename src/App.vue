@@ -87,7 +87,7 @@ watch(
       .map((move) => move.lan)
       .join(' ')
 
-    sendPosition(engineInput.value.fen, moves, engineInput.value.turnColor)
+    sendPosition(state.value.start.fen, moves, engineInput.value.turnColor)
   }
 )
 
