@@ -1,12 +1,28 @@
 import type { DrawShape } from 'chessground/draw'
 import { ref, shallowRef, type Ref, readonly } from 'vue'
-import type { Color, Dests, Key } from 'chessground/types'
-import { Chess, SQUARES, type Move, type Square, type Color as ShortColor } from 'chess.js'
+import type { Color, Dests, Key, Role } from 'chessground/types'
+import {
+  Chess,
+  SQUARES,
+  type Move,
+  type Square,
+  type Color as ShortColor,
+  type PieceSymbol
+} from 'chess.js'
 import { opposite } from 'chessground/util'
 
 export const startpos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 export type Promotion = 'q' | 'n' | 'b' | 'r'
+
+export interface MaterialInfo {
+  count: {
+    diff: { [key in Role]: number }
+  }
+  value: {
+    diff: number
+  }
+}
 
 export const promotions: { name: string; value: Promotion }[] = [
   { name: 'Queen', value: 'q' },
@@ -50,6 +66,7 @@ export interface ChessState {
     orientation: Color
     check: Key | undefined
     turnColor: Color
+    materialInfo: MaterialInfo
   }
 }
 
@@ -103,7 +120,8 @@ export class API {
         legalMoves: legalMoves(initialPosition),
         ply: startPly,
         promotionDialog: { isEnabled: false },
-        turnColor: fromShortColor(initialPosition.turn())
+        turnColor: fromShortColor(initialPosition.turn()),
+        materialInfo: getMaterialInfo(initialPosition)
       }
     }
   }
@@ -165,6 +183,7 @@ export class API {
     )
 
     this.state.value.viewing.ply = this.state.value.current.ply = this.getCurrentPly()
+    this.state.value.viewing.materialInfo = getMaterialInfo(this.position)
   }
 
   toggleOrientation() {
@@ -227,6 +246,7 @@ export class API {
           this.position,
           this.state.value.viewing.turnColor
         )
+        this.state.value.viewing.materialInfo = getMaterialInfo(this.position)
 
         this.state.value.viewing.ply = ply
       }
@@ -246,6 +266,7 @@ export class API {
       this.state.value.viewing.fen = history[historyIndex].before
 
       this.state.value.viewing.check = kingCheckSquare(position, this.state.value.viewing.turnColor)
+      this.state.value.viewing.materialInfo = getMaterialInfo(position)
     }
   }
 
@@ -297,6 +318,51 @@ function kingCheckSquare(position: Chess, color: Color): Key | undefined {
   } else {
     return undefined
   }
+}
+
+function getMaterialInfo(position: Chess) {
+  const pieceValues: { [key in Role]: number } = {
+    pawn: 1,
+    knight: 3,
+    bishop: 3,
+    rook: 5,
+    queen: 9,
+    king: 0
+  }
+
+  const typeToRole: { [key in PieceSymbol]: Role } = {
+    p: 'pawn',
+    n: 'knight',
+    b: 'bishop',
+    r: 'rook',
+    q: 'queen',
+    k: 'king'
+  }
+
+  const materialInfo: MaterialInfo = {
+    count: {
+      diff: { pawn: 0, knight: 0, bishop: 0, rook: 0, queen: 0, king: 0 }
+    },
+    value: { diff: 0 }
+  }
+
+  function notNull<T>(value: T | null | undefined): value is T {
+    return value !== null
+  }
+
+  const pieces = position.board().flat().filter(notNull)
+
+  for (const piece of pieces) {
+    if (piece.color === 'w') {
+      materialInfo.count.diff[typeToRole[piece.type]] += 1
+      materialInfo.value.diff += pieceValues[typeToRole[piece.type]]
+    } else {
+      materialInfo.count.diff[typeToRole[piece.type]] -= 1
+      materialInfo.value.diff -= pieceValues[typeToRole[piece.type]]
+    }
+  }
+
+  return materialInfo
 }
 
 function fromShortColor(color: ShortColor): Color {
@@ -381,7 +447,8 @@ export function useChess() {
       legalMoves: legalMoves(position),
       ply: startPly,
       promotionDialog: { isEnabled: false },
-      turnColor: fromShortColor(position.turn())
+      turnColor: fromShortColor(position.turn()),
+      materialInfo: getMaterialInfo(position)
     }
   })
   const api = shallowRef<API>(new API(state, position))

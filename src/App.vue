@@ -4,6 +4,7 @@ import HistoryViewer from '@/components/HistoryViewer.vue'
 import LoadPgnModal from '@/components/LoadPgnModal.vue'
 import ShareGameModal from '@/components/ShareGameModal.vue'
 import HistoryNavigator from '@/components/HistoryNavigator.vue'
+import PlayerInfo from '@/components/PlayerInfo.vue'
 import { useEngine } from '@/Engine'
 
 import { computed, ref, watch, watchEffect } from 'vue'
@@ -206,6 +207,7 @@ watch(
         <button class="btn btn-sm btn-primary" @click="shareGameModal?.show()">Share</button>
         <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
+      <PlayerInfo :state="state"></PlayerInfo>
 
       <HistoryViewer
         class="flex-grow flex-wrap min-h-28 h-full basis-0 overflow-auto"
