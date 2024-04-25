@@ -2,7 +2,7 @@
 import { useClipboard } from '@vueuse/core'
 import { ref, toRefs } from 'vue'
 
-import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import { ClipboardIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   pgn: string
@@ -71,9 +71,11 @@ const {
             <span class="label-text">PGN</span>
           </label>
           <button type="button" @click="pgnCopy(pgn)" v-if="pgnIsSupported">
-            <span v-if="!pgnCopied" class="text-xs">Copy</span
-            ><span class="text-xs" v-else>Copied!</span>
-            <ClipboardIcon class="inline size-4" />
+            <span v-if="!pgnCopied" class="text-xs"
+              >Copy <ClipboardIcon class="inline size-4" /></span
+            ><span class="text-xs" v-else
+              >Copied! <ClipboardDocumentCheckIcon class="inline size-4"
+            /></span>
           </button>
         </div>
         <textarea
