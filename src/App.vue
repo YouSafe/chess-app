@@ -5,7 +5,7 @@ import LoadPgnModal from '@/components/LoadPgnModal.vue'
 import ShareGameModal from '@/components/ShareGameModal.vue'
 import HistoryNavigator from '@/components/HistoryNavigator.vue'
 import PlayerInfo from '@/components/PlayerInfo.vue'
-import { useEngine } from '@/Engine'
+import { useEngine } from '@/useEngine'
 
 import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
