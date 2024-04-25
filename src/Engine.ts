@@ -1,6 +1,6 @@
 import type { Move, Square } from 'chess.js'
 import { ref } from 'vue'
-import type { Promotion } from './useChess'
+import { startpos, type Promotion } from './useChess'
 import type { Color } from 'chessground/types'
 
 export interface Eval {
@@ -19,13 +19,24 @@ export function useEngine() {
 
   let worker: Worker | null = null
 
-  function start() {
+  async function start() {
     worker = new Worker(wasmSupport ? 'stockfish/stockfish.wasm.js' : 'stockfish/stockfish.js')
-    worker.addEventListener('message', (data) => handleEngineStdout(data))
+
     worker.addEventListener('error', (err) => console.error(err))
     worker.addEventListener('messageerror', (err) => console.error(err))
 
     worker.postMessage('uci')
+    await new Promise((resolve) => {
+      if (worker === null) return
+      worker.onmessage = (data) => {
+        if ((data.data as string) === 'uciok') {
+          resolve(undefined)
+        }
+      }
+    })
+    worker.onmessage = null
+
+    worker.addEventListener('message', (data) => handleEngineStdout(data))
   }
 
   function parseUCIMove(move: string): Move {
@@ -116,7 +127,9 @@ export function useEngine() {
     bestMove.value = undefined
     currMove.value = undefined
 
-    worker.postMessage(`position fen ${startposition} moves ${moves}`)
+    const position = startposition === startpos ? 'startpos' : `fen ${startposition}`
+
+    worker.postMessage(`position ${position} moves ${moves}`)
     worker.postMessage('go movetime 2000')
   }
 

@@ -35,9 +35,9 @@ const {
 
 watch(
   engineShouldRun,
-  () => {
+  async () => {
     if (engineShouldRun.value) {
-      start()
+      await start()
 
       let fen: string, historyIndex: number, turnColor: Color
       if (playAgainstComputer.value) {
