@@ -13,7 +13,6 @@ import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import GameResultModal from '@/components/GameResultModal.vue'
 import type { Eval, Search } from './UCIProtocol'
-import type { Move } from 'chess.js'
 
 const playAgainstComputer = ref(false)
 const toggleEngine = ref(true)
@@ -29,8 +28,6 @@ const { start, terminate } = useEngine()
 
 const bestMove = ref<Eval>()
 const currMove = ref<Eval>()
-
-const computerMove = ref<Move | null>(null)
 
 watch(
   engineShouldRun,
@@ -66,8 +63,6 @@ watch(
 
     bestMove.value = undefined
 
-    computerMove.value = null
-
     start({
       currentFen: state.value.viewing.fen,
       ply: state.value.viewing.ply,
@@ -76,30 +71,21 @@ watch(
       startPos: state.value.start.fen,
       shouldStop: false,
       emitCurrentMove: (ev: Eval) => (currMove.value = ev),
-      emitBestMove: (ev: Eval) => {
-        bestMove.value = ev
-
-        computerMove.value = ev.pv[0]
-
-        if (
-          state.value.current.playerColor &&
-          state.value.current.turnColor !== state.value.viewing.orientation &&
-          playAgainstComputer.value
-        ) {
-          api.value.move(ev.pv[0])
-          computerMove.value = null
-        }
-      }
+      emitBestMove: (ev: Eval) => (bestMove.value = ev)
     })
   }
 )
 
 watch(
-  () => playAgainstComputer.value,
+  [bestMove, () => state.value.current.playerColor, () => state.value.viewing.orientation],
   () => {
-    if (playAgainstComputer.value && computerMove.value) {
-      api.value.move(computerMove.value)
-      computerMove.value = null
+    if (
+      state.value.current.playerColor &&
+      state.value.current.playerColor !== state.value.current.turnColor &&
+      bestMove.value &&
+      state.value.current.fen === bestMove.value.fen
+    ) {
+      api.value.move(bestMove.value.pv[0])
     }
   }
 )
@@ -142,7 +128,7 @@ for (const shortcut of shortcuts) {
 }
 
 watch(
-  playAgainstComputer,
+  [playAgainstComputer, () => state.value.viewing.orientation],
   () => {
     if (playAgainstComputer.value) {
       api.value.setPlayerColor(state.value.viewing.orientation)
