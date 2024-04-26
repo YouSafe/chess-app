@@ -100,16 +100,17 @@ watchEffect(() => {
 })
 
 const evaluationDisplay = computed(() => {
-  if (!bestMove.value) return null
-  const { type, value } = bestMove.value
+  if (state.value.viewing.ply === state.value.current.ply && state.value.current.gameResult) {
+    return '-'
+  }
+
+  if (!currMove.value) return null
+  const { type, value } = currMove.value
 
   const sign = value > 0 ? '+' : '-'
   const absValue = Math.abs(value)
 
   if (type === 'mate') {
-    if (absValue === 0) {
-      return '-'
-    }
     return `${sign}M${Math.abs(absValue)}`
   } else {
     return `${sign}${(absValue / 100).toFixed(1)}`
