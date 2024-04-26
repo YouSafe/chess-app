@@ -45,10 +45,16 @@ const orientationSortedColors = computed<Color[]>(() =>
     <div v-for="color in orientationSortedColors" :key="color">
       <span v-if="color === state.current.playerColor">You</span>
       <span v-if="opposite(color) === state.current.playerColor">Computer</span>
-      <span v-for="(diff, piece) in state.viewing.materialInfo.count.diff" :key="piece">
-        <span v-if="color === valueToColor(diff)" class="text-2xl">{{
-          colorPieceSymbols[color][piece]
-        }}</span>
+      <span
+        v-for="(diff, piece) in state.viewing.materialInfo.count.diff"
+        :key="piece"
+        class="-space-x-4"
+      >
+        <template v-for="n in Math.abs(diff)" :key="n">
+          <span v-if="color === valueToColor(diff)" class="text-2xl">{{
+            colorPieceSymbols[color][piece]
+          }}</span>
+        </template>
       </span>
 
       <span v-if="color === valueToColor(state.viewing.materialInfo.value.diff)">
