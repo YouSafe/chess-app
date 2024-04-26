@@ -12,7 +12,8 @@ import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import GameResultModal from '@/components/GameResultModal.vue'
-import type { Color } from 'chessground/types'
+import type { Eval, Search } from './UCIProtocol'
+import type { Move } from 'chess.js'
 
 const playAgainstComputer = ref(false)
 const toggleEngine = ref(true)
@@ -24,109 +25,97 @@ const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 
 const { state, api } = useChess()
 
-const {
-  turnColor: engineTurnColor,
-  bestMove,
-  currMove,
-  sendPosition,
-  start,
-  terminate
-} = useEngine()
+const { start, terminate } = useEngine()
+
+const bestMove = ref<Eval>()
+const currMove = ref<Eval>()
+
+const computerMove = ref<Move | null>(null)
 
 watch(
   engineShouldRun,
-  async () => {
+  () => {
     if (engineShouldRun.value) {
-      await start()
+      const historyIndex = state.value.viewing.ply - state.value.start.ply
 
-      let fen: string, historyIndex: number, turnColor: Color
-      if (playAgainstComputer.value) {
-        fen = state.value.current.fen
-        historyIndex = state.value.current.ply - state.value.start.ply
-        turnColor = state.value.current.turnColor
-      } else {
-        fen = state.value.viewing.fen
-        historyIndex = state.value.viewing.ply - state.value.start.ply
-        turnColor = state.value.viewing.turnColor
-      }
+      const moves = state.value.current.history.slice(0, historyIndex).map((move) => move.lan)
 
-      const moves = state.value.current.history
-        .slice(0, historyIndex)
-        .map((move) => move.lan)
-        .join(' ')
-
-      sendPosition(fen, moves, turnColor)
+      start({
+        currentFen: state.value.viewing.fen,
+        searchMs: 100,
+        moves,
+        ply: state.value.viewing.ply,
+        startPos: state.value.start.fen,
+        shouldStop: false,
+        emitCurrentMove: (ev: Eval) => (currMove.value = ev),
+        emitBestMove: (ev: Eval) => (bestMove.value = ev)
+      } as Search)
     } else {
+      bestMove.value = undefined
       terminate()
     }
   },
   { immediate: true }
 )
 
-const engineInput = computed(() => {
-  if (playAgainstComputer.value) {
-    return {
-      fen: state.value.current.fen,
-      historyIndex: state.value.current.ply - state.value.start.ply,
-      turnColor: state.value.current.turnColor
-    }
-  } else {
-    return {
-      fen: state.value.viewing.fen,
-      historyIndex: state.value.viewing.ply - state.value.start.ply,
-      turnColor: state.value.viewing.turnColor
-    }
+watch(
+  () => state.value.viewing.fen,
+  () => {
+    const historyIndex = state.value.viewing.ply - state.value.start.ply
+    const moves = state.value.current.history.slice(0, historyIndex).map((move) => move.lan)
+
+    bestMove.value = undefined
+
+    computerMove.value = null
+
+    start({
+      currentFen: state.value.viewing.fen,
+      ply: state.value.viewing.ply,
+      moves,
+      searchMs: 1000,
+      startPos: state.value.start.fen,
+      shouldStop: false,
+      emitCurrentMove: (ev: Eval) => (currMove.value = ev),
+      emitBestMove: (ev: Eval) => {
+        bestMove.value = ev
+
+        computerMove.value = ev.pv[0]
+
+        if (
+          state.value.current.playerColor &&
+          state.value.current.turnColor !== state.value.viewing.orientation &&
+          playAgainstComputer.value
+        ) {
+          api.value.move(ev.pv[0])
+          computerMove.value = null
+        }
+      }
+    })
   }
-})
+)
 
 watch(
-  () => engineInput.value.fen,
+  () => playAgainstComputer.value,
   () => {
-    const moves = state.value.current.history
-      .slice(0, engineInput.value.historyIndex)
-      .map((move) => move.lan)
-      .join(' ')
-
-    sendPosition(state.value.start.fen, moves, engineInput.value.turnColor)
+    if (playAgainstComputer.value && computerMove.value) {
+      api.value.move(computerMove.value)
+      computerMove.value = null
+    }
   }
 )
 
 watchEffect(() => {
-  if (
-    playAgainstComputer.value &&
-    state.value.current.playerColor &&
-    state.value.current.turnColor !== state.value.viewing.orientation &&
-    bestMove.value
-  ) {
-    api.value.move(bestMove.value)
-  }
-})
-
-watchEffect(() => {
-  if (currMove.value && !playAgainstComputer.value) {
-    const move = currMove.value.move
+  if (bestMove.value && !playAgainstComputer.value) {
+    const move = bestMove.value.pv[0]
     api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
   } else {
     api.value.setAutoShapes([])
   }
 })
 
-watchEffect(() => {
-  if (bestMove.value && !playAgainstComputer.value) {
-    const move = bestMove.value
-    api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
-  }
-})
-
 const evaluationDisplay = computed(() => {
-  if (!currMove.value) return null
-  const evaluation = currMove.value.eval
-  if (!evaluation) return false
-  const modifier = engineTurnColor.value === 'black' ? -1 : 1
-  const { type, value } = {
-    type: evaluation.type,
-    value: evaluation.value * modifier
-  }
+  if (!bestMove.value) return null
+  const { type, value } = bestMove.value
 
   const sign = value > 0 ? '+' : '-'
   const absValue = Math.abs(value)
@@ -152,14 +141,17 @@ for (const shortcut of shortcuts) {
   onKeyStroke(shortcut.key, shortcut.func)
 }
 
-watch(playAgainstComputer, () => {
-  if (playAgainstComputer.value) {
-    api.value.viewCurrent()
-    api.value.setPlayerColor(state.value.viewing.orientation)
-  } else {
-    api.value.setPlayerColor(undefined)
-  }
-})
+watch(
+  playAgainstComputer,
+  () => {
+    if (playAgainstComputer.value) {
+      api.value.setPlayerColor(state.value.viewing.orientation)
+    } else {
+      api.value.setPlayerColor(undefined)
+    }
+  },
+  { immediate: true }
+)
 
 watch(
   () => state.value.current.gameResult,
