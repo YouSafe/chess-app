@@ -207,6 +207,7 @@ export class API {
     this.state.value.current.ply = viewingPly
     this.state.value.current.pgn = this.position.pgn()
     this.state.value.current.history = this.position.history({ verbose: true })
+    this.state.value.current.gameResult = determineGameResult(this.position)
   }
 
   viewStart() {

@@ -104,7 +104,9 @@ const evaluationDisplay = computed(() => {
     return '-'
   }
 
-  if (!currMove.value) return null
+  if (!currMove.value) {
+    return null
+  }
   const { type, value } = currMove.value
 
   const sign = value > 0 ? '+' : '-'

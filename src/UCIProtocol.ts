@@ -91,7 +91,15 @@ export class Protocol {
           }
         }
 
-        if (povEv === undefined || timeMillis === undefined) return
+        if (isMate && !povEv) {
+          if (this.currentEvaluation) {
+            this.search.emitBestMove(this.currentEvaluation)
+          }
+          this.search = undefined
+          return
+        }
+
+        if (povEv === undefined) return
 
         const ev = this.search.ply % 2 === 1 ? -povEv : povEv
 
@@ -104,7 +112,7 @@ export class Protocol {
         }
 
         this.search.emitCurrentMove(this.currentEvaluation)
-        if (timeMillis >= this.search.searchMs) {
+        if (timeMillis && timeMillis >= this.search.searchMs) {
           this.stop()
         }
       }
