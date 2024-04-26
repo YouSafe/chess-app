@@ -91,8 +91,8 @@ watch(
 )
 
 watchEffect(() => {
-  if (bestMove.value && !playAgainstComputer.value) {
-    const move = bestMove.value.pv[0]
+  if (currMove.value && !playAgainstComputer.value) {
+    const move = currMove.value.pv[0]
     api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
   } else {
     api.value.setAutoShapes([])
@@ -169,7 +169,8 @@ watch(
         <div class="form-control w-fit inline-flex">
           <label class="label cursor-pointer gap-2">
             <input type="checkbox" class="toggle" v-model="toggleEngine" checked />
-            <span class="font-bold text-2xl">{{ evaluationDisplay }}</span>
+            <span class="font-bold text-2xl" v-if="evaluationDisplay">{{ evaluationDisplay }}</span>
+            <span class="loading loading-bars loading-sm" v-else></span>
             <span>depth={{ currMove?.depth }}</span>
           </label>
         </div>
