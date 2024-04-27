@@ -25,8 +25,10 @@ const orientationSortedColors = computed<Color[]>(() =>
 <template>
   <div class="grid grid-rows-2">
     <div v-for="color in orientationSortedColors" :key="color" class="flex items-center">
+      
       <span v-if="color === state.current.playerColor">You</span>
       <span v-if="opposite(color) === state.current.playerColor">Computer</span>
+
       <template v-for="(diff, piece) in state.viewing.materialInfo.count.diff" :key="piece">
         <template v-if="color === valueToColor(diff)">
           <div :class="{ '-space-x-3': piece !== 'queen' }">

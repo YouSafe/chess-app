@@ -5,13 +5,23 @@ import LoadPgnModal from '@/components/LoadPgnModal.vue'
 import ShareGameModal from '@/components/ShareGameModal.vue'
 import HistoryNavigator from '@/components/HistoryNavigator.vue'
 import PlayerInfo from '@/components/PlayerInfo.vue'
+import BaseModal from '@/components/BaseModal.vue'
+import GameResultModal from '@/components/GameResultModal.vue'
+import IconParkOutlineTarget from '@/components/icons/IconParkOutlineTarget.vue'
+
 import { useEngine } from '@/useEngine'
+
+import {
+  AdjustmentsHorizontalIcon,
+  ShareIcon,
+  ArrowPathRoundedSquareIcon,
+  PencilIcon,
+} from '@heroicons/vue/24/outline'
 
 import { computed, ref, watch, watchEffect } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
-import GameResultModal from '@/components/GameResultModal.vue'
 import type { Eval, Search } from './UCIProtocol'
 
 const playAgainstComputer = ref(false)
@@ -21,6 +31,7 @@ const engineShouldRun = computed(() => toggleEngine.value || playAgainstComputer
 const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
 const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
 const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
+const settingsModal = ref<InstanceType<typeof BaseModal>>()
 
 const { state, api } = useChess()
 
@@ -157,37 +168,74 @@ watch(
   <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)" />
   <ShareGameModal ref="shareGameModal" :pgn="state.current.pgn" :fen="state.viewing.fen" />
   <GameResultModal ref="gameResultModal" :game-result="state.current.gameResult"></GameResultModal>
+  <BaseModal ref="settingsModal">
+    <div class="modal-box">
+      <div>Engine</div>
+      <div>Search time</div>
+      <div>Hide Evaluation</div>
+      <div>Draw Best Move</div>
+      WIP
+    </div>
+  </BaseModal>
 
-  <div class="flex min-h-svh max-w-svh justify-center portrait:flex-col flex-wrap">
+  <div class="flex min-h-svh max-w-full justify-center portrait:flex-col flex-wrap">
     <ChessgroundBoard
       class="flex-shrink-0 flex-grow-0"
       :api="api"
       :state="state"
     ></ChessgroundBoard>
     <aside class="min-w-[20em] max-w-[30em] p-2 flex flex-1 bg-base-200 flex-col gap-2">
-      <div class="h-10">
-        <div class="form-control w-fit inline-flex">
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox" class="toggle" v-model="toggleEngine" checked />
-            <span class="font-bold text-2xl" v-if="evaluationDisplay">{{ evaluationDisplay }}</span>
-            <span class="loading loading-bars loading-sm" v-else></span>
-            <span>depth={{ currMove?.depth }}</span>
-          </label>
+      <div class="h-10 flex items-center">
+        <label class="flex items-middle">
+          <input type="checkbox" class="toggle toggle-success" v-model="toggleEngine" checked />
+        </label>
+        <div>
+          <span class="font-bold text-2xl inline-block w-20 text-center" v-if="evaluationDisplay">{{
+            evaluationDisplay
+          }}</span>
+          <span class="loading loading-bars loading-sm" v-else></span>
+          <span> depth {{ currMove?.depth }}</span>
         </div>
-        <div class="form-control w-fit inline-flex">
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox" class="toggle" v-model="playAgainstComputer" />
-            <span class="">Play against computer</span>
-          </label>
+        <div class="ml-auto flex gap-2">
+          <div class="tooltip tooltip-bottom" data-tip="Play against computer">
+            <label class="swap btn btn-square btn-neutral btn-sm">
+              <!-- this hidden checkbox controls the state -->
+              <input type="checkbox" v-model="playAgainstComputer" />
+
+              <IconParkOutlineTarget class="swap-on size-5 text-success" />
+              <IconParkOutlineTarget class="swap-off size-5" />
+            </label>
+          </div>
+
+          <button
+            class="btn btn-square btn-sm btn-neutral tooltip tooltip-bottom flex items-center justify-center"
+            data-tip="Toggle Orientation"
+            @click="api.toggleOrientation()"
+          >
+            <ArrowPathRoundedSquareIcon class="size-5"></ArrowPathRoundedSquareIcon>
+          </button>
+          <button
+            class="btn btn-square btn-sm btn-neutral tooltip tooltip-bottom flex items-center justify-center"
+            data-tip="Load Game"
+            @click="loadPgnModal?.show()"
+          >
+            <PencilIcon class="size-5"></PencilIcon>
+          </button>
+          <button
+            class="btn btn-square btn-sm btn-neutral tooltip tooltip-bottom flex items-center justify-center"
+            data-tip="Share"
+            @click="shareGameModal?.show()"
+          >
+            <ShareIcon class="size-5"></ShareIcon>
+          </button>
+          <button
+            class="btn btn-square btn-sm btn-neutral tooltip tooltip-bottom tooltip-fix flex items-center justify-center"
+            data-tip="Settings"
+            @click="settingsModal?.show()"
+          >
+            <AdjustmentsHorizontalIcon class="size-6"></AdjustmentsHorizontalIcon>
+          </button>
         </div>
-      </div>
-      <div>
-        <button class="btn btn-sm btn-primary" @click="api.toggleOrientation()">
-          Toggle Orientation
-        </button>
-        <button class="btn btn-sm btn-primary" @click="loadPgnModal?.show()">Load PGN</button>
-        <button class="btn btn-sm btn-primary" @click="shareGameModal?.show()">Share</button>
-        <!-- <button class="btn btn-sm btn-primary" @click="boardAPI?.reset()">Reset</button> -->
       </div>
       <PlayerInfo :state="state"></PlayerInfo>
 
@@ -200,6 +248,12 @@ watch(
     </aside>
   </div>
 </template>
+
+<style scoped>
+.tooltip-fix.tooltip-bottom:before {
+  left: 0%;
+}
+</style>
 
 <style>
 html,
