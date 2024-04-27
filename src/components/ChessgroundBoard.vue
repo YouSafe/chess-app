@@ -127,10 +127,14 @@ onMounted(() => {
   watch(
     () => state.value.current.playerColor,
     () => {
-      if (state.value.current.playerColor) {
-        chessground.state.movable.color = state.value.current.playerColor
+      if (
+        state.value.viewing.ply !== state.value.current.ply &&
+        state.value.current.playerColor !== undefined
+      ) {
+        chessground.state.movable.color = undefined
       } else {
-        chessground.state.movable.color = state.value.viewing.turnColor
+        chessground.state.movable.color =
+          state.value.current.playerColor || state.value.viewing.turnColor
       }
     }
   )
