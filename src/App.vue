@@ -15,7 +15,7 @@ import {
   AdjustmentsHorizontalIcon,
   ShareIcon,
   ArrowPathRoundedSquareIcon,
-  PencilIcon,
+  PencilIcon
 } from '@heroicons/vue/24/outline'
 
 import { computed, ref, watch, watchEffect } from 'vue'
@@ -198,8 +198,7 @@ watch(
         </div>
         <div class="ml-auto flex gap-2">
           <div class="tooltip tooltip-bottom" data-tip="Play against computer">
-            <label class="swap btn btn-square btn-neutral btn-sm">
-              <!-- this hidden checkbox controls the state -->
+            <label class="swap btn items-unset btn-square btn-neutral btn-sm">
               <input type="checkbox" v-model="playAgainstComputer" />
 
               <IconParkOutlineTarget class="swap-on size-5 text-success" />
@@ -252,6 +251,10 @@ watch(
 <style scoped>
 .tooltip-fix.tooltip-bottom:before {
   left: 0%;
+}
+
+.items-unset {
+  align-items: unset;
 }
 </style>
 
