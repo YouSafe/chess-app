@@ -18,15 +18,19 @@ import {
   PencilIcon
 } from '@heroicons/vue/24/outline'
 
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { DrawShape } from 'chessground/draw'
 import { onKeyStroke } from '@vueuse/core'
 import { useChess } from '@/useChess'
 import type { Eval, Search } from './UCIProtocol'
 
 const playAgainstComputer = ref(false)
-const toggleEngine = ref(true)
-const engineShouldRun = computed(() => toggleEngine.value || playAgainstComputer.value)
+const showEvaluation = ref<boolean>(true)
+const showBestMove = ref<boolean>(true)
+
+const engineShouldRun = computed(
+  () => showBestMove.value || showEvaluation.value || playAgainstComputer.value
+)
 
 const gameResultModal = ref<InstanceType<typeof GameResultModal>>()
 const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
@@ -50,7 +54,7 @@ watch(
 
       start({
         currentFen: state.value.viewing.fen,
-        searchMs: 100,
+        searchMs: 1000,
         moves,
         ply: state.value.viewing.ply,
         startPos: state.value.start.fen,
@@ -101,8 +105,8 @@ watch(
   }
 )
 
-watchEffect(() => {
-  if (currMove.value && !playAgainstComputer.value) {
+watch([currMove, showBestMove], () => {
+  if (currMove.value && showBestMove.value) {
     const move = currMove.value.pv[0]
     api.value.setAutoShapes([{ orig: move.from, dest: move.to, brush: 'paleBlue' } as DrawShape])
   } else {
@@ -167,14 +171,17 @@ watch(
 <template>
   <LoadPgnModal ref="loadPgnModal" @load="(pgn) => api.loadPgn(pgn)" />
   <ShareGameModal ref="shareGameModal" :pgn="state.current.pgn" :fen="state.viewing.fen" />
-  <GameResultModal ref="gameResultModal" :game-result="state.current.gameResult"></GameResultModal>
+  <GameResultModal ref="gameResultModal" :game-result="state.current.gameResult" />
   <BaseModal ref="settingsModal">
-    <div class="modal-box">
-      <div>Engine</div>
-      <div>Search time</div>
-      <div>Hide Evaluation</div>
-      <div>Draw Best Move</div>
-      WIP
+    <div class="modal-box w-[25em] grid grid-cols-[max-content_auto] gap-4">
+      <label>Engine</label>
+      <select class="select select-sm select-bordered w-full max-w">
+        <option>Stockfish</option>
+      </select>
+      <label>Show Evaluation</label>
+      <input type="checkbox" class="toggle toggle-success" checked v-model="showEvaluation" />
+      <label>Draw Best Move</label>
+      <input type="checkbox" class="toggle toggle-success" checked v-model="showBestMove" />
     </div>
   </BaseModal>
 
@@ -186,14 +193,11 @@ watch(
     ></ChessgroundBoard>
     <aside class="min-w-[20em] max-w-[30em] p-2 flex flex-1 bg-base-200 flex-col gap-2">
       <div class="h-10 flex items-center">
-        <label class="flex items-middle">
-          <input type="checkbox" class="toggle toggle-success" v-model="toggleEngine" checked />
-        </label>
-        <div>
+        <div v-show="showEvaluation">
           <span class="font-bold text-2xl inline-block w-20 text-center" v-if="evaluationDisplay">{{
             evaluationDisplay
           }}</span>
-          <span class="loading loading-bars loading-sm" v-else></span>
+          <span class="loading loading-bars loading-sm text-center" v-else></span>
           <span> depth {{ currMove?.depth }}</span>
         </div>
         <div class="ml-auto flex gap-2">
