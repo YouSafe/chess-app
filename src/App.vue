@@ -9,7 +9,7 @@ import BaseModal from '@/components/BaseModal.vue'
 import GameResultModal from '@/components/GameResultModal.vue'
 import IconParkOutlineTarget from '@/components/icons/IconParkOutlineTarget.vue'
 
-import { useEngine } from '@/useEngine'
+import { useEngine, type Engine } from '@/useEngine'
 
 import {
   AdjustmentsHorizontalIcon,
@@ -37,9 +37,31 @@ const loadPgnModal = ref<InstanceType<typeof LoadPgnModal>>()
 const shareGameModal = ref<InstanceType<typeof ShareGameModal>>()
 const settingsModal = ref<InstanceType<typeof BaseModal>>()
 
+const isWindowSecureContext = () => window.isSecureContext
+const hasWasmSupport = () =>
+  typeof WebAssembly === 'object' &&
+  WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
+
+const supportedEngines: Engine[] = [
+  {
+    name: 'Stockfish 16 SIMD',
+    scriptURL: 'stockfish-16/stockfish-nnue-16.js',
+    available: () => isWindowSecureContext() && hasWasmSupport()
+  },
+  {
+    name: 'Stockfish 2019-08-15',
+    scriptURL: 'stockfish/stockfish.wasm.js',
+    available: hasWasmSupport
+  }
+]
+
+const availableEngines = supportedEngines.filter((engine) => engine.available())
+
+const currentEngine = ref<Engine>(availableEngines[0])
+
 const { state, api } = useChess()
 
-const { start, terminate } = useEngine()
+const { start, stop, terminate, swap } = useEngine(currentEngine.value)
 
 const bestMove = ref<Eval>()
 const currMove = ref<Eval>()
@@ -54,7 +76,7 @@ watch(
 
       start({
         currentFen: state.value.viewing.fen,
-        searchMs: 1000,
+        searchMs: state.value.current.playerColor !== undefined ? 1000 : undefined,
         moves,
         ply: state.value.viewing.ply,
         startPos: state.value.start.fen,
@@ -70,6 +92,25 @@ watch(
   { immediate: true }
 )
 
+watch(currentEngine, () => {
+  swap(currentEngine.value)
+
+  const historyIndex = state.value.viewing.ply - state.value.start.ply
+
+  const moves = state.value.current.history.slice(0, historyIndex).map((move) => move.lan)
+
+  start({
+    currentFen: state.value.viewing.fen,
+    searchMs: state.value.current.playerColor !== undefined ? 1000 : undefined,
+    moves,
+    ply: state.value.viewing.ply,
+    startPos: state.value.start.fen,
+    shouldStop: false,
+    emitCurrentMove: (ev: Eval) => (currMove.value = ev),
+    emitBestMove: (ev: Eval) => (bestMove.value = ev)
+  } as Search)
+})
+
 watch(
   () => state.value.viewing.fen,
   () => {
@@ -82,7 +123,7 @@ watch(
       currentFen: state.value.viewing.fen,
       ply: state.value.viewing.ply,
       moves,
-      searchMs: 1000,
+      searchMs: state.value.current.playerColor !== undefined ? 1000 : undefined,
       startPos: state.value.start.fen,
       shouldStop: false,
       emitCurrentMove: (ev: Eval) => (currMove.value = ev),
@@ -150,6 +191,7 @@ watch(
   () => {
     if (playAgainstComputer.value) {
       api.value.setPlayerColor(state.value.viewing.orientation)
+      stop()
     } else {
       api.value.setPlayerColor(undefined)
     }
@@ -175,8 +217,10 @@ watch(
   <BaseModal ref="settingsModal">
     <div class="modal-box w-[25em] grid grid-cols-[max-content_auto] gap-4">
       <label>Engine</label>
-      <select class="select select-sm select-bordered w-full max-w">
-        <option>Stockfish</option>
+      <select class="select select-sm select-bordered w-full max-w" v-model="currentEngine">
+        <option v-once v-for="engine in availableEngines" :key="engine.name" :value="engine">
+          {{ engine.name }}
+        </option>
       </select>
       <label>Show Evaluation</label>
       <input type="checkbox" class="toggle toggle-success" checked v-model="showEvaluation" />

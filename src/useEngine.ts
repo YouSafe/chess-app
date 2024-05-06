@@ -9,19 +9,28 @@ export function parseUCIMove(move: string): Move {
   return { from, to, promotion: promotion } as Move
 }
 
-export function useEngine() {
+export interface Engine {
+  name: string
+  scriptURL: string | URL
+  available: () => boolean
+}
+
+export function useEngine(initialEngine: Engine) {
+  let currentEngine: Engine = initialEngine
   const protocol = new Protocol()
   let worker: Worker | null = null
 
-  const wasmSupport =
-    typeof WebAssembly === 'object' &&
-    WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
+  function swap(engine: Engine) {
+    stop()
+    terminate()
+    currentEngine = engine
+  }
 
   function start(work: Search) {
     protocol.performSearch(work)
 
     if (!worker) {
-      worker = new Worker(wasmSupport ? 'stockfish/stockfish.wasm.js' : 'stockfish/stockfish.js')
+      worker = new Worker(currentEngine.scriptURL)
 
       worker.addEventListener('error', (err) => console.error(err))
       worker.addEventListener('messageerror', (err) => console.error(err))
@@ -29,13 +38,13 @@ export function useEngine() {
         'message',
         (data) => {
           protocol.receive(data.data)
-          // console.log('<-- ' + data.data)
+          console.log('<-- ' + data.data)
         },
         true
       )
       protocol.connect((cmd) => {
         worker?.postMessage(cmd)
-        // console.log('--> ' + cmd)
+        console.log('--> ' + cmd)
       })
     }
   }
@@ -50,5 +59,5 @@ export function useEngine() {
     worker = null
   }
 
-  return { start, stop, terminate }
+  return { start, stop, terminate, swap }
 }

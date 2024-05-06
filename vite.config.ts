@@ -7,6 +7,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/chess-app/',
+  server: {
+    https: {
+      key: './localhost-https/private.key',
+      cert: './localhost-https/certificate.crt'
+    }
+  },
   plugins: [
     vue(),
     VitePWA({

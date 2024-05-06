@@ -16,7 +16,7 @@ export interface Search {
   startPos: string
   currentFen: string
   moves: string[]
-  searchMs: number
+  searchMs?: number
 
   shouldStop: boolean
   emitBestMove: (ev: Eval) => void
@@ -112,7 +112,7 @@ export class Protocol {
         }
 
         this.search.emitCurrentMove(this.currentEvaluation)
-        if (timeMillis && timeMillis >= this.search.searchMs) {
+        if (timeMillis && this.search.searchMs && timeMillis >= this.search.searchMs) {
           this.stop()
         }
       }
