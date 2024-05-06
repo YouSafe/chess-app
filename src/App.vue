@@ -27,6 +27,7 @@ import type { Eval, Search } from './UCIProtocol'
 const playAgainstComputer = ref(false)
 const showEvaluation = ref<boolean>(true)
 const showBestMove = ref<boolean>(true)
+const searchTime = ref<number>(2)
 
 const engineShouldRun = computed(
   () => showBestMove.value || showEvaluation.value || playAgainstComputer.value
@@ -76,7 +77,8 @@ watch(
 
       start({
         currentFen: state.value.viewing.fen,
-        searchMs: state.value.current.playerColor !== undefined ? 1000 : undefined,
+        searchMs:
+          state.value.current.playerColor !== undefined ? searchTime.value * 1000 : undefined,
         moves,
         ply: state.value.viewing.ply,
         startPos: state.value.start.fen,
@@ -101,7 +103,7 @@ watch(currentEngine, () => {
 
   start({
     currentFen: state.value.viewing.fen,
-    searchMs: state.value.current.playerColor !== undefined ? 1000 : undefined,
+    searchMs: state.value.current.playerColor !== undefined ? searchTime.value * 1000 : undefined,
     moves,
     ply: state.value.viewing.ply,
     startPos: state.value.start.fen,
@@ -226,6 +228,11 @@ watch(
       <input type="checkbox" class="toggle toggle-success" checked v-model="showEvaluation" />
       <label>Draw Best Move</label>
       <input type="checkbox" class="toggle toggle-success" checked v-model="showBestMove" />
+      <label>Search time</label>
+      <div class="flex gap-2">
+        <input type="range" min="1" max="8" v-model="searchTime" step="1" class="range" />
+        <span>{{ searchTime }}s</span>
+      </div>
     </div>
   </BaseModal>
 
