@@ -2,32 +2,36 @@
 
 import { precache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
-import { clientsClaim } from 'workbox-core'
+import { clientsClaim, type HandlerWillRespondCallbackParam } from 'workbox-core'
+import { StaleWhileRevalidate } from 'workbox-strategies'
+import * as navigationPreload from 'workbox-navigation-preload'
 
 declare const self: ServiceWorkerGlobalScope
+
+navigationPreload.enable()
 
 self.skipWaiting()
 clientsClaim()
 
 precache(self.__WB_MANIFEST)
 
-registerRoute(
-  ({ request }) => ['document', 'iframe', 'worker'].includes(request.destination),
-  async ({ request }) => {
-    const response = await fetch(request)
-
-    // Set COOP and COEP headers
+const headersPlugin = {
+  handlerWillRespond: async ({ response }: HandlerWillRespondCallbackParam) => {
     const headers = new Headers(response.headers)
-    headers.append('Cross-Origin-Opener-Policy', 'same-origin')
-    headers.append('Cross-Origin-Embedder-Policy', 'require-corp')
+    headers.set('Cross-Origin-Embedder-Policy', 'require-corp')
+    headers.set('Cross-Origin-Opener-Policy', 'same-origin')
 
-    // Construct a new response with the headers
-    const newResponse = new Response(response.body, {
+    return new Response(response.body, {
+      headers,
       status: response.status,
-      statusText: response.statusText,
-      headers
+      statusText: response.statusText
     })
-
-    return newResponse
   }
+}
+
+registerRoute(
+  ({ request }) => ['document', 'style', 'script', 'worker'].includes(request.destination),
+  new StaleWhileRevalidate({
+    plugins: [headersPlugin]
+  })
 )
