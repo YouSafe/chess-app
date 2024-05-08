@@ -8,6 +8,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base: '/chess-app/',
   server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    },
     https: {
       key: './localhost-https/private.key',
       cert: './localhost-https/certificate.crt'
@@ -16,6 +20,13 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
+      strategies: 'injectManifest',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,nnue}'],
+        maximumFileSizeToCacheInBytes: 45000000
+      },
+      srcDir: 'src',
+      filename: 'sw.ts',
       manifest: {
         name: 'Chess App',
         start_url: '/chess-app/',

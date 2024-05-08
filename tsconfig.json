@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "WebWorker"]
+  },
   "files": [],
   "references": [
     {

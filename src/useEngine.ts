@@ -21,7 +21,6 @@ export function useEngine(initialEngine: Engine) {
   let worker: Worker | null = null
 
   function swap(engine: Engine) {
-    stop()
     terminate()
     currentEngine = engine
   }
@@ -38,13 +37,13 @@ export function useEngine(initialEngine: Engine) {
         'message',
         (data) => {
           protocol.receive(data.data)
-          console.log('<-- ' + data.data)
+          // console.log('<-- ' + data.data)
         },
         true
       )
       protocol.connect((cmd) => {
         worker?.postMessage(cmd)
-        console.log('--> ' + cmd)
+        // console.log('--> ' + cmd)
       })
     }
   }
