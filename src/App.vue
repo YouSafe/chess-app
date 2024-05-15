@@ -46,7 +46,7 @@ const hasWasmSupport = () =>
 const supportedEngines: Engine[] = [
   {
     name: 'My Engine',
-    scriptURL: new URL('myengine/custom-engine.js', import.meta.url),
+    scriptURL: 'myengine/custom-engine.js',
     workerOptions: { type: 'module' },
     available: () => isCrossOriginIsolated() && hasWasmSupport()
   },

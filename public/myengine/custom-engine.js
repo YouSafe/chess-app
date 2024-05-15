@@ -1,4 +1,4 @@
-import init, { Engine } from './pkg'
+import init, { Engine } from './pkg/wasm.js'
 
 let engine = undefined
 
