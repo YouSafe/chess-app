@@ -45,6 +45,12 @@ const hasWasmSupport = () =>
 
 const supportedEngines: Engine[] = [
   {
+    name: 'My Engine',
+    scriptURL: new URL('myengine/custom-engine.js', import.meta.url),
+    workerOptions: { type: 'module' },
+    available: () => isCrossOriginIsolated() && hasWasmSupport()
+  },
+  {
     name: 'Stockfish 16 SIMD',
     scriptURL: 'stockfish-16/stockfish-nnue-16.js',
     available: () => isCrossOriginIsolated() && hasWasmSupport()

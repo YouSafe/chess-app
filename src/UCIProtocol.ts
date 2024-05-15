@@ -144,7 +144,11 @@ export class Protocol {
       this.currentEvaluation = undefined
 
       this.send(`position fen ${this.search.startPos} moves ${this.search.moves.join(' ')}`)
-      this.send(`go movetime ${this.search.searchMs}`)
+      if (this.search.searchMs) {
+        this.send(`go movetime ${this.search.searchMs}`)
+      } else {
+        this.send(`go infinite`)
+      }
     }
   }
 

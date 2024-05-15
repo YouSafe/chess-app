@@ -12,6 +12,7 @@ export function parseUCIMove(move: string): Move {
 export interface Engine {
   name: string
   scriptURL: string | URL
+  workerOptions?: WorkerOptions
   available: () => boolean
 }
 
@@ -29,7 +30,7 @@ export function useEngine(initialEngine: Engine) {
     protocol.performSearch(work)
 
     if (!worker) {
-      worker = new Worker(currentEngine.scriptURL)
+      worker = new Worker(currentEngine.scriptURL, currentEngine.workerOptions)
 
       worker.addEventListener('error', (err) => console.error(err))
       worker.addEventListener('messageerror', (err) => console.error(err))
