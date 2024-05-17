@@ -1,13 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+*/
+export function main(): void;
+/**
 * @param {number} addr
 * @param {MessagePort} message_port
 */
 export function worker_entry_point(addr: number, message_port: MessagePort): void;
-/**
-*/
-export function main(): void;
 /**
 */
 export class Engine {
@@ -20,21 +20,16 @@ export class Engine {
 * @param {string} message
 */
   receive_command(message: string): void;
-/**
-* @returns {MessagePort}
-*/
-  get_port(): MessagePort;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
+  readonly main: () => void;
   readonly __wbg_engine_free: (a: number) => void;
   readonly worker_entry_point: (a: number, b: number) => void;
   readonly engine_new: () => number;
   readonly engine_receive_command: (a: number, b: number, c: number) => void;
-  readonly engine_get_port: (a: number) => number;
-  readonly main: () => void;
   readonly memory: WebAssembly.Memory;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

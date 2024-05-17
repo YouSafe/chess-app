@@ -1,11 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
+export function main(): void;
 export function __wbg_engine_free(a: number): void;
 export function worker_entry_point(a: number, b: number): void;
 export function engine_new(): number;
 export function engine_receive_command(a: number, b: number, c: number): void;
-export function engine_get_port(a: number): number;
-export function main(): void;
 export const memory: WebAssembly.Memory;
 export function __wbindgen_malloc(a: number, b: number): number;
 export function __wbindgen_realloc(a: number, b: number, c: number, d: number): number;

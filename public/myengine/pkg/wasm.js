@@ -208,17 +208,17 @@ function __wbg_adapter_20(arg0, arg1, arg2) {
 }
 
 /**
+*/
+export function main() {
+    wasm.main();
+}
+
+/**
 * @param {number} addr
 * @param {MessagePort} message_port
 */
 export function worker_entry_point(addr, message_port) {
     wasm.worker_entry_point(addr, addHeapObject(message_port));
-}
-
-/**
-*/
-export function main() {
-    wasm.main();
 }
 
 function handleError(f, args) {
@@ -269,13 +269,6 @@ export class Engine {
         const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         wasm.engine_receive_command(this.__wbg_ptr, ptr0, len0);
-    }
-    /**
-    * @returns {MessagePort}
-    */
-    get_port() {
-        const ret = wasm.engine_get_port(this.__wbg_ptr);
-        return takeObject(ret);
     }
 }
 
@@ -455,8 +448,8 @@ function __wbg_get_imports() {
         const ret = wasm.memory;
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper128 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 34, __wbg_adapter_20);
+    imports.wbg.__wbindgen_closure_wrapper88 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 12, __wbg_adapter_20);
         return addHeapObject(ret);
     };
 
