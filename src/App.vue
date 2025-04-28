@@ -9,7 +9,7 @@ import BaseModal from '@/components/BaseModal.vue'
 import GameResultModal from '@/components/GameResultModal.vue'
 import IconParkOutlineTarget from '@/components/icons/IconParkOutlineTarget.vue'
 
-import { useEngine, type Engine } from '@/useEngine'
+import { SaiphEngine, SimpleEngine, useEngine, type Engine, type EngineFactory } from '@/useEngine'
 
 import {
   AdjustmentsHorizontalIcon,
@@ -43,32 +43,31 @@ const hasWasmSupport = () =>
   typeof WebAssembly === 'object' &&
   WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
 
-const supportedEngines: Engine[] = [
+const supportedEngines: EngineFactory[] = [
   {
-    name: 'My Engine',
-    scriptURL: 'myengine/custom-engine.js',
-    workerOptions: { type: 'module' },
+    name: 'Saiph',
+    make: () => new SaiphEngine(),
     available: () => isCrossOriginIsolated() && hasWasmSupport()
-  },
+  },  
   {
     name: 'Stockfish 16 SIMD',
-    scriptURL: 'stockfish-16/stockfish-nnue-16.js',
+    make: () => new SimpleEngine('stockfish-16/stockfish-nnue-16.js'),
     available: () => isCrossOriginIsolated() && hasWasmSupport()
   },
   {
     name: 'Stockfish 2019-08-15',
-    scriptURL: 'stockfish/stockfish.wasm.js',
+    make: () => new SimpleEngine('stockfish/stockfish.wasm.js'),
     available: hasWasmSupport
   }
 ]
 
 const availableEngines = supportedEngines.filter((engine) => engine.available())
 
-const currentEngine = ref<Engine>(availableEngines[0])
+const currentEngineFactory = ref<EngineFactory>(availableEngines[0])
 
 const { state, api } = useChess()
 
-const { start, stop, terminate, swap } = useEngine(currentEngine.value)
+const { start, stop, terminate, swap } = useEngine()
 
 const bestMove = ref<Eval>()
 const currMove = ref<Eval>()
@@ -100,8 +99,8 @@ watch(
   { immediate: true }
 )
 
-watch(currentEngine, () => {
-  swap(currentEngine.value)
+watch(currentEngineFactory, () => {
+  swap(currentEngineFactory.value.make())
 
   const historyIndex = state.value.viewing.ply - state.value.start.ply
 
@@ -117,7 +116,7 @@ watch(currentEngine, () => {
     emitCurrentMove: (ev: Eval) => (currMove.value = ev),
     emitBestMove: (ev: Eval) => (bestMove.value = ev)
   } as Search)
-})
+}, {immediate: true})
 
 watch(
   () => state.value.viewing.fen,
@@ -225,7 +224,7 @@ watch(
   <BaseModal ref="settingsModal">
     <div class="modal-box w-[25em] grid grid-cols-[max-content_auto] gap-4">
       <label>Engine</label>
-      <select class="select select-sm select-bordered w-full max-w" v-model="currentEngine">
+      <select class="select select-sm select-bordered w-full max-w" v-model="currentEngineFactory">
         <option v-once v-for="engine in availableEngines" :key="engine.name" :value="engine">
           {{ engine.name }}
         </option>
