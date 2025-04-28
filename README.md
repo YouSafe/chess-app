@@ -1,8 +1,8 @@
 # Chess-App
 
-A chess web application for playing against my personal chess engine.
+A chess web application for playing against my personal chess engine called Saiph.
 
-Plat at: [yousafe.github.io/chess-app/](https://yousafe.github.io/chess-app/)
+Play at: [yousafe.github.io/chess-app/](https://yousafe.github.io/chess-app/)
 
 <a href="https://yousafe.github.io/chess-app/">
   <img src="./screenshot.png" alt="Chess App Screenshot" width="400">
