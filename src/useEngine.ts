@@ -1,7 +1,7 @@
 import type { Move, Square } from 'chess.js'
 import { Protocol, type Search } from './UCIProtocol'
 import type { Promotion } from './useChess'
-import init, { Engine as SaiphWasmEngine } from '../pkg'
+import type { Engine as SaiphWasmEngine } from '../public/saiph/wasm'
 
 export function parseUCIMove(move: string): Move {
   const from = move.slice(0, 2) as Square
@@ -75,11 +75,14 @@ export class SaiphEngine implements Engine {
   protocol = new Protocol()
   engine: SaiphWasmEngine | null = null
 
-  start(work: Search): void {
+  async start(work: Search) {
     this.protocol.performSearch(work)
 
     if (this.engine == null) {
-      this.engine = SaiphWasmEngine.new();
+      const { default: init, Engine: SaiphWasmEngine } = await import(/* @vite-ignore */ new URL('/saiph/wasm.js', import.meta.url).href);
+
+      await init();
+      this.engine = SaiphWasmEngine.new() as SaiphWasmEngine;
     }
 
     this.engine.set_callback((message: string) => this.protocol.receive(message));

@@ -33,15 +33,15 @@ export const promotions: { name: string; value: Promotion }[] = [
 
 export type PromotionDialogState =
   | {
-      isEnabled: false
-    }
+    isEnabled: false
+  }
   | {
-      isEnabled: true
-      color: Color
-      square: Key
-      callback: (promotion: Promotion) => void
-      cancel: () => void
-    }
+    isEnabled: true
+    color: Color
+    square: Key
+    callback: (promotion: Promotion) => void
+    cancel: () => void
+  }
 
 export interface ChessState {
   start: {
@@ -94,7 +94,7 @@ export class API {
       fullMovesToGamePly(fromShortColor(this.position.turn()), this.position.moveNumber()) -
       history.length
     const fen = this.position.fen()
-    const startFen = history.at(0)?.before || fen
+    const startFen = history[0]?.before || fen
 
     const initialPosition = new Chess(startFen)
 
@@ -141,7 +141,7 @@ export class API {
     }
 
     const piece = this.position.get(move.from as Square)
-    const promotionFile = piece.color === 'w' ? '8' : '1'
+    const promotionFile = piece!.color === 'w' ? '8' : '1'
 
     let promotion: Promotion | undefined = undefined
 
@@ -238,7 +238,7 @@ export class API {
     if (historyIndex === history.length) {
       // we returned to our current position
       if (isViewingHistory) {
-        const lastMove = history.at(-1) as Move
+        const lastMove = history[history.length - 1] as Move
 
         this.state.value.viewing.fen = lastMove.after
         this.state.value.viewing.legalMoves = legalMoves(this.position)
@@ -407,18 +407,18 @@ function determineGameResult(position: Chess): GameResult | undefined {
 
 export type GameResult =
   | {
-      result: 'whiteWon' | 'blackWon'
-      reason: 'resignation' | 'checkmate' | 'time'
-    }
+    result: 'whiteWon' | 'blackWon'
+    reason: 'resignation' | 'checkmate' | 'time'
+  }
   | {
-      result: 'draw'
-      reason:
-        | 'agreement'
-        | 'stalemate'
-        | 'insufficient material'
-        | 'threefold repetition'
-        | '50-move rule'
-    }
+    result: 'draw'
+    reason:
+    | 'agreement'
+    | 'stalemate'
+    | 'insufficient material'
+    | 'threefold repetition'
+    | '50-move rule'
+  }
 
 export function useChess() {
   const position = new Chess()
