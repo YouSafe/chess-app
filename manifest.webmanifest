@@ -1,0 +1,1 @@
+{"name":"Chess App","short_name":"chess-app","start_url":"/chess-app/","display":"standalone","background_color":"#1d232a","lang":"en","scope":"/chess-app/","prefer_related_applications":true,"theme_color":"#1d232a","icons":[{"src":"icons/512.png","sizes":"512x512","type":"image/png","purpose":"maskable any"}]}
