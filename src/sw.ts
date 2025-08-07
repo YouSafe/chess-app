@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { precache } from 'workbox-precaching'
+import { cleanupOutdatedCaches, precache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { clientsClaim, type HandlerWillRespondCallbackParam } from 'workbox-core'
 import { CacheFirst } from 'workbox-strategies'
@@ -28,6 +28,8 @@ const headersPlugin = {
     })
   }
 }
+
+cleanupOutdatedCaches()
 
 registerRoute(
   ({ request }) => ['document', 'style', 'script', 'worker'].includes(request.destination),
