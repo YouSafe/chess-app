@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite --host",
     "build": "run-p type-check \"build-only {@}\" --",
-    "deploy": "vite build --base=/chess-app/ && node utils/publish.js",
     "preview": "vite preview",
     "test:unit": "vitest",
     "build-only": "vite build",
