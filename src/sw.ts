@@ -3,7 +3,7 @@
 import { precache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { clientsClaim, type HandlerWillRespondCallbackParam } from 'workbox-core'
-import { StaleWhileRevalidate } from 'workbox-strategies'
+import { CacheFirst } from 'workbox-strategies'
 import * as navigationPreload from 'workbox-navigation-preload'
 
 declare const self: ServiceWorkerGlobalScope
@@ -31,7 +31,7 @@ const headersPlugin = {
 
 registerRoute(
   ({ request }) => ['document', 'style', 'script', 'worker'].includes(request.destination),
-  new StaleWhileRevalidate({
+  new CacheFirst({
     plugins: [headersPlugin]
   })
 )
