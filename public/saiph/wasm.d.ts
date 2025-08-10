@@ -7,27 +7,27 @@ export class Engine {
   free(): void;
   static new(): Engine;
   send_command(message: string): void;
-  set_callback(_function: Function): void;
+  set_callback(listener: (message: string) => void): void;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly __wbg_engine_free: (a: number, b: number) => void;
-  readonly worker_entry_point: (a: number) => void;
   readonly engine_new: () => number;
   readonly engine_send_command: (a: number, b: number, c: number) => void;
   readonly engine_set_callback: (a: number, b: any) => void;
+  readonly worker_entry_point: (a: number) => void;
   readonly main: () => void;
+  readonly memory: WebAssembly.Memory;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
-  readonly __wbindgen_export_2: WebAssembly.Table;
-  readonly memory: WebAssembly.Memory;
+  readonly __wbindgen_export_3: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_export_7: WebAssembly.Table;
-  readonly closure28_externref_shim: (a: number, b: number, c: any) => void;
+  readonly closure12_externref_shim: (a: number, b: number, c: any) => void;
   readonly __wbindgen_thread_destroy: (a?: number, b?: number, c?: number) => void;
   readonly __wbindgen_start: (a: number) => void;
 }

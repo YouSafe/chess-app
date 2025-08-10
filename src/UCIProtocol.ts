@@ -41,6 +41,7 @@ export class Protocol {
       this.search.emitCurrentMove(this.currentEvaluation)
     }
 
+    this.send?.('quit')
     this.search = undefined
     this.send = undefined
   }

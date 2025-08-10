@@ -83,10 +83,10 @@ export class SaiphEngine implements Engine {
 
       await init();
       this.engine = SaiphWasmEngine.new() as SaiphWasmEngine;
+      this.engine.set_callback((message: string) => this.protocol.receive(message));
+      this.protocol.connect((message) => this.engine?.send_command(message));
     }
 
-    this.engine.set_callback((message: string) => this.protocol.receive(message));
-    this.protocol.connect((message) => this.engine?.send_command(message));
   }
   stop(): void {
     this.protocol.performSearch(undefined)
