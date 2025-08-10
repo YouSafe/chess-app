@@ -13,8 +13,6 @@ navigationPreload.enable()
 self.skipWaiting()
 clientsClaim()
 
-precache(self.__WB_MANIFEST)
-
 const headersPlugin = {
   handlerWillRespond: async ({ response }: HandlerWillRespondCallbackParam) => {
     const headers = new Headers(response.headers)
@@ -28,6 +26,14 @@ const headersPlugin = {
     })
   }
 }
+
+// Delay precaching to when the service worker is already registered and 
+// the page reloaded with the expected headers
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'START_PRECACHING') {
+    precache(self.__WB_MANIFEST)
+  }
+})
 
 cleanupOutdatedCaches()
 

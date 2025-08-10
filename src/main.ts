@@ -13,6 +13,10 @@ registerSW({
             console.info("Reload page after registering service worker")
             window.location.reload()
         })
+
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'START_PRECACHING' })
+        }
     },
     onRegisterError(error: any) {
         console.error('Service worker registration failed:', error)
